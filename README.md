@@ -89,22 +89,6 @@ Then open KeyAwake, tick your keyboard, and turn on **Arrancar al iniciar sesió
 **Or build it yourself** — recommended, see [Building](#building). A locally built copy is signed
 with your own certificate, which means macOS stops re-asking for Bluetooth permission.
 
-### Upgrading from KeyBoost
-
-KeyAwake is the same app under a new name and bundle identifier. The login item does not carry
-over, so remove the old one first:
-
-```sh
-launchctl bootout gui/$(id -u)/com.keyboost.agent 2>/dev/null
-rm -f ~/Library/LaunchAgents/com.keyboost.agent.plist
-rm -rf /Applications/KeyBoost.app
-```
-
-Your keyboard selection does carry over: on first launch KeyAwake copies `settings.json` and
-`link-history.csv` from the old `Application Support/KeyBoost` folder, leaving the originals in
-place. Turn on **Arrancar al iniciar sesión** again — a LaunchAgent cannot migrate itself. Once
-the new version works, the old folder can be deleted.
-
 ## Permissions
 
 **Bluetooth, once, for the engine only.** That is the entire list.
@@ -204,6 +188,15 @@ Translations are the easiest way to help: copy `Resources/en.lproj/Localizable.s
 `<language>.lproj`, translate the right-hand side, and add the language code to
 `CFBundleLocalizations` in `build.sh`. The app currently ships English, Spanish and Simplified Chinese.
 
+## Credits
+
+KeyAwake is a rewrite of [KeyBoost](https://github.com/leonardofundora/KeyBoost) by
+[Leonardo Fundora](https://github.com/leonardofundora). The original established the diagnosis of
+the macOS 27 subrating bug and the CoreBluetooth workaround this app is built on; KeyAwake
+restructures that work into smaller tested modules and extends it with the link history and
+diagnostics described above. The original copyright notice is retained.
+
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE). The copyright notice belongs to Leonardo Fundora, the author of the
+original KeyBoost.

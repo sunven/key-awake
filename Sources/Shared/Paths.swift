@@ -6,25 +6,8 @@ enum Paths {
         let base = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("KeyAwake", isDirectory: true)
         try? fileManager.createDirectory(at: base, withIntermediateDirectories: true)
-        migrateFromKeyBoost(into: base)
         return base
     }()
-
-    /// The app was called KeyBoost up to 1.1.1, with its own support folder. Copying the two
-    /// files that hold user state means an upgrade keeps the configured keyboards instead of
-    /// silently reverting them to the 345 ms fault. The old folder is left untouched.
-    private static func migrateFromKeyBoost(into base: URL) {
-        let fileManager = FileManager.default
-        let old = base.deletingLastPathComponent()
-            .appendingPathComponent("KeyBoost", isDirectory: true)
-        for name in ["settings.json", "link-history.csv"] {
-            let source = old.appendingPathComponent(name)
-            let destination = base.appendingPathComponent(name)
-            guard fileManager.fileExists(atPath: source.path),
-                  !fileManager.fileExists(atPath: destination.path) else { continue }
-            try? fileManager.copyItem(at: source, to: destination)
-        }
-    }
 
     static var settings: URL { support.appendingPathComponent("settings.json") }
     static var status:   URL { support.appendingPathComponent("status.json") }
