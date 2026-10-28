@@ -20,9 +20,10 @@ IDENTITY=$(security find-certificate -c "KeyAwake" -Z 2>/dev/null \
 if [[ -n "$IDENTITY" ]]; then
   echo "▸ Signing with the self-signed “KeyAwake” certificate"
 else
-  IDENTITY=$(security find-identity -v -p codesigning 2>/dev/null | awk '/[0-9A-F]{40}/ {print $2; exit}')
+  IDENTITIES=$(security find-identity -v -p codesigning 2>/dev/null || true)
+  IDENTITY=$(<<<"$IDENTITIES" awk '/[0-9A-F]{40}/ {print $2; exit}')
   if [[ -n "$IDENTITY" ]]; then
-    NAME=$(security find-identity -v -p codesigning 2>/dev/null | sed -n 's/.*"\(.*\)".*/\1/p' | head -1)
+    NAME=$(<<<"$IDENTITIES" sed -n 's/.*"\(.*\)".*/\1/p' | head -1)
     echo "▸ Signing with: $NAME"
     echo "  Heads-up: macOS will show that name in Login Items."
     echo "  Run scripts/make-signing-cert.sh to sign as “KeyAwake” instead."

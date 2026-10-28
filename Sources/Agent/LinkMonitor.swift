@@ -53,30 +53,19 @@ final class LinkMonitor {
 
     /// Sums the success/failure counters bluetoothd prints once a second per LE link.
     private static func readPacketLoss() -> Double? {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/log")
-        task.arguments = ["show", "--last", "65s", "--debug", "--style", "compact",
-                          "--predicate", #"process == "bluetoothd" AND category == "Server.Core""#]
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError = FileHandle.nullDevice
-        do { try task.run() } catch { return nil }
-
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        task.waitUntilExit()
-        guard let text = String(data: data, encoding: .utf8) else { return nil }
+        guard let data = ProcessRunner.output("/usr/bin/log",
+                                              ["show", "--last", "65s", "--debug", "--style", "compact",
+                                               "--predicate", #"process == "bluetoothd" AND category == "Server.Core""#]),
+              let text = String(data: data, encoding: .utf8) else { return nil }
 
         var ok = 0, failed = 0
         for line in text.split(separator: "\n") {
-            guard line.contains("rx [S=") else { continue }
             // Format: rx [S=  12:F=   3]
-            for part in [("rx [S=", true)] {
-                guard let range = line.range(of: part.0) else { continue }
-                let tail = line[range.upperBound...]
-                let numbers = tail.prefix(20).split(whereSeparator: { !"0123456789".contains($0) })
-                if numbers.count >= 2, let s = Int(numbers[0]), let f = Int(numbers[1]) {
-                    ok += s; failed += f
-                }
+            guard let range = line.range(of: "rx [S=") else { continue }
+            let tail = line[range.upperBound...]
+            let numbers = tail.prefix(20).split(whereSeparator: { !"0123456789".contains($0) })
+            if numbers.count >= 2, let s = Int(numbers[0]), let f = Int(numbers[1]) {
+                ok += s; failed += f
             }
         }
         // A percentage over a handful of packets is noise, not a measurement. While nobody

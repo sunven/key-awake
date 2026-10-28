@@ -87,13 +87,6 @@ enum LoginItem {
 
     @discardableResult
     private static func launchctl(_ arguments: [String]) -> Bool {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/bin/launchctl")
-        task.arguments = arguments
-        task.standardOutput = FileHandle.nullDevice
-        task.standardError = FileHandle.nullDevice
-        do { try task.run() } catch { return false }
-        task.waitUntilExit()
-        return task.terminationStatus == 0
+        ProcessRunner.run("/bin/launchctl", arguments)
     }
 }

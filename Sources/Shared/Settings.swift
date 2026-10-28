@@ -68,8 +68,7 @@ struct Settings: Codable, Equatable {
             boosted = [BoostedDevice(name: names[0], addresses: addresses)]
         } else {
             boosted = addresses.map { BoostedDevice(name: "", addresses: [$0]) }
-                   + names.filter { name in !boosted.contains { $0.matches(name: name) } }
-                          .map { BoostedDevice(name: $0, addresses: []) }
+                   + names.map { BoostedDevice(name: $0, addresses: []) }
         }
     }
 
@@ -141,21 +140,19 @@ struct Settings: Codable, Equatable {
         var isSafe: Bool { level == 0 }
     }
 
-    static var latencyChoices: [LatencyChoice] {
-        [
-            .init(level: 0, label: L("Fastest"),
-                  detail: L("10–30 ms interval, no skipping"), worstCaseMs: 30),
-            .init(level: 1, label: L("Balanced"),
-                  detail: L("100–120 ms interval, 1 skip"), worstCaseMs: 240),
-            .init(level: 2, label: L("Lowest power"),
-                  detail: L("290–320 ms interval, 1 skip"), worstCaseMs: 640),
-        ]
-    }
+    static let latencyChoices: [LatencyChoice] = [
+        .init(level: 0, label: L("Fastest"),
+              detail: L("10–30 ms interval, no skipping"), worstCaseMs: 30),
+        .init(level: 1, label: L("Balanced"),
+              detail: L("100–120 ms interval, 1 skip"), worstCaseMs: 240),
+        .init(level: 2, label: L("Lowest power"),
+              detail: L("290–320 ms interval, 1 skip"), worstCaseMs: 640),
+    ]
 
-    static var idleChoices: [(label: String, seconds: Int)] {
-        [(L("30 seconds"), 30), (L("1 minute"), 60), (L("3 minutes"), 180),
-         (L("10 minutes"), 600), (L("Never release"), 0)]
-    }
+    static let idleChoices: [(label: String, seconds: Int)] = [
+        (L("30 seconds"), 30), (L("1 minute"), 60), (L("3 minutes"), 180),
+        (L("10 minutes"), 600), (L("Never release"), 0),
+    ]
 
     static func load() -> Settings {
         JSONStore.read(Settings.self, from: Paths.settings) ?? Settings()

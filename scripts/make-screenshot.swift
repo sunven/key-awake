@@ -114,9 +114,8 @@ DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
 
     NSGraphicsContext.restoreGraphicsState()
 
-    let out = CommandLine.arguments.contains("--out")
-        ? CommandLine.arguments[CommandLine.arguments.firstIndex(of: "--out")! + 1]
-        : "docs/screenshot.png"
+    let arguments = CommandLine.arguments
+    let out = arguments.firstIndex(of: "--out").map { arguments[$0 + 1] } ?? "docs/screenshot.png"
     try! rep.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: out))
     print("wrote \(out)")
     exit(0)

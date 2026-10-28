@@ -1,6 +1,9 @@
 import SwiftUI
 
 struct SettingsView: View {
+    /// Smallest content height the window allows; `AppDelegate.fitWindow` clamps to the same.
+    static let minContentHeight: CGFloat = 540
+
     @ObservedObject var model: Model
     /// Reports the height the window needs to show everything without scrolling, so the
     /// window can size itself instead of leaving a blank half under a short device list.
@@ -16,7 +19,7 @@ struct SettingsView: View {
             Divider()
             measured(.footer) { footer }
         }
-        .frame(minWidth: 540, minHeight: 540)
+        .frame(minWidth: 540, minHeight: Self.minContentHeight)
         .onPreferenceChange(FittingHeightKey.self) { parts in
             guard parts.content > 0 else { return }
             onFittingHeight(parts.total)
@@ -62,9 +65,7 @@ struct SettingsView: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
-            Toggle("Enabled", isOn: Binding(
-                get: { model.settings.enabled },
-                set: { value in model.edit { $0.enabled = value } }))
+            Toggle("Enabled", isOn: binding(\.enabled))
                 .help(L("When off, KeyAwake leaves every link alone."))
             Text(model.headline)
                 .font(.callout).bold()
@@ -77,21 +78,19 @@ struct SettingsView: View {
 
     // MARK: - Sections
 
-    /// Pointing devices are never boosted, so listing them only adds noise. Everything else
-    /// stays: a keyboard the inventory has not classified yet must not vanish from the list.
-    private var visibleDevices: [DeviceStatus] {
-        model.status.devices.filter { $0.kind != .pointing }
-    }
-
     private var devices: some View {
-        section(L("Bluetooth LE devices")) {
+        // Pointing devices are never boosted, so listing them only adds noise. Everything
+        // else stays: a keyboard the inventory has not classified yet must not vanish.
+        let all = model.status.devices
+        let visible = all.filter { $0.kind != .pointing }
+        return section(L("Bluetooth LE devices")) {
             VStack(alignment: .leading, spacing: 8) {
-                if visibleDevices.isEmpty {
+                if visible.isEmpty {
                     Text("No keyboard in sight.")
                         .foregroundStyle(.secondary).font(.callout)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
-                    ForEach(visibleDevices) { device in
+                    ForEach(visible) { device in
                         HStack(spacing: 10) {
                             Toggle("", isOn: Binding(
                                 get: { device.wanted },
@@ -104,13 +103,13 @@ struct SettingsView: View {
                                     .font(.caption).foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Text(model.detail(for: device))
+                            Text(device.detail(enabled: model.settings.enabled))
                                 .font(.caption).monospacedDigit()
                                 .foregroundStyle(device.boosted ? Color.green : Color.secondary)
                         }
                     }
                 }
-                if model.status.devices.contains(where: { $0.kind != .keyboard }) {
+                if all.contains(where: { $0.kind != .keyboard }) {
                     caption(L("Only keyboards are boosted. On macOS 27, requesting low latency for a pointing device as well makes the system push the keyboard back to its idle latency."))
                 }
             }
@@ -165,15 +164,13 @@ struct SettingsView: View {
                         HStack(spacing: 8) {
                             Text(L("Link latency"))
                             Spacer(minLength: 4)
-                            Picker("", selection: Binding(
-                                get: { model.settings.latencyLevel },
-                                set: { value in model.edit { $0.latencyLevel = value } })) {
-                                    ForEach(Settings.latencyChoices, id: \.level) { choice in
-                                        Text(choice.label).tag(choice.level)
-                                    }
+                            Picker("", selection: binding(\.latencyLevel)) {
+                                ForEach(Settings.latencyChoices, id: \.level) { choice in
+                                    Text(choice.label).tag(choice.level)
                                 }
-                                .labelsHidden()
-                                .controlSize(.small)
+                            }
+                            .labelsHidden()
+                            .controlSize(.small)
                         }
                         if let detail = model.latencyDetail { caption(detail) }
                     }
@@ -183,15 +180,13 @@ struct SettingsView: View {
                         HStack(spacing: 8) {
                             Text(L("Release when idle"))
                             Spacer(minLength: 4)
-                            Picker("", selection: Binding(
-                                get: { model.settings.idleReleaseSeconds },
-                                set: { value in model.edit { $0.idleReleaseSeconds = value } })) {
-                                    ForEach(Settings.idleChoices, id: \.seconds) { choice in
-                                        Text(choice.label).tag(choice.seconds)
-                                    }
+                            Picker("", selection: binding(\.idleReleaseSeconds)) {
+                                ForEach(Settings.idleChoices, id: \.seconds) { choice in
+                                    Text(choice.label).tag(choice.seconds)
                                 }
-                                .labelsHidden()
-                                .controlSize(.small)
+                            }
+                            .labelsHidden()
+                            .controlSize(.small)
                         }
                         caption(L("After releasing, the keyboard goes back to saving power. The next "
                                   + "keystroke arrives a little late; everything after it is instant."))
@@ -208,9 +203,7 @@ struct SettingsView: View {
     private var options: some View {
         section(nil) {
             HStack(alignment: .top, spacing: 28) {
-                Toggle("Show in the menu bar", isOn: Binding(
-                    get: { model.settings.showMenuBarIcon },
-                    set: { value in model.edit { $0.showMenuBarIcon = value } }))
+                Toggle("Show in the menu bar", isOn: binding(\.showMenuBarIcon))
                 VStack(alignment: .leading, spacing: 2) {
                     Toggle("Start at login", isOn: Binding(
                         get: { model.launchAtLogin },
@@ -262,6 +255,12 @@ struct SettingsView: View {
             Color.clear.preference(key: FittingHeightKey.self,
                                    value: FittingParts(height: proxy.size.height, part: part))
         })
+    }
+
+    /// A two-way binding into the saved settings, so every control edits through the same path.
+    private func binding<T>(_ keyPath: WritableKeyPath<Settings, T>) -> Binding<T> {
+        Binding(get: { model.settings[keyPath: keyPath] },
+                set: { value in model.edit { $0[keyPath: keyPath] = value } })
     }
 
     private func caption(_ text: String) -> some View {

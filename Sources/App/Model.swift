@@ -125,13 +125,4 @@ final class Model: ObservableObject {
         guard let loss = status.lossPercent else { return L("too little traffic to measure") }
         return String(format: "%.1f %%", loss)
     }
-
-    /// Per-device status text, in the right-hand column of the list.
-    func detail(for device: DeviceStatus) -> String {
-        if !device.present { return L("away") }
-        if device.kind != .keyboard { return L("not supported") }
-        if !device.wanted { return "—" }
-        if !settings.enabled { return L("off") }
-        return device.boosted ? L("latency 0") : L("idle")
-    }
 }

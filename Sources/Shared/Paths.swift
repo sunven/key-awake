@@ -59,14 +59,12 @@ enum JSONStore {
 enum Log {
     static func write(_ message: String) {
         let stamp = ISO8601DateFormatter().string(from: Date())
-        let line = "\(stamp)  \(message)\n"
-        FileHandle.standardError.write(Data(line.utf8))
-        guard let data = line.data(using: .utf8) else { return }
+        let data = Data("\(stamp)  \(message)\n".utf8)
+        FileHandle.standardError.write(data)
         if let h = try? FileHandle(forWritingTo: Paths.log) {
             defer { try? h.close() }
             // Truncate past 1 MB so it cannot grow forever.
             if (try? h.seekToEnd()) ?? 0 > 1_000_000 {
-                try? Data().write(to: Paths.log, options: .atomic)
                 try? data.write(to: Paths.log, options: .atomic)
                 return
             }

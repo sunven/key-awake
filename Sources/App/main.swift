@@ -16,7 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         })
         hosting.frame = NSRect(x: 0, y: 0, width: 580, height: 740)
         hosting.layoutSubtreeIfNeeded()
-        let initialHeight = max(hosting.fittingSize.height, 540)
+        let initialHeight = max(hosting.fittingSize.height, SettingsView.minContentHeight)
 
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 580, height: initialHeight),
                               styleMask: [.titled, .closable, .miniaturizable, .resizable],
@@ -41,7 +41,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let frame = window.frame
         let chrome = frame.height - window.contentLayoutRect.height
         let available = (window.screen ?? NSScreen.main)?.visibleFrame.height ?? height + chrome
-        let target = min(max(ceil(height), 540), available - chrome)
+        let target = min(max(ceil(height), SettingsView.minContentHeight), available - chrome)
         guard abs(frame.height - (target + chrome)) > 1 else { return }
         window.setFrame(NSRect(x: frame.minX, y: frame.maxY - target - chrome,
                                width: frame.width, height: target + chrome),

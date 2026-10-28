@@ -41,6 +41,15 @@ struct DeviceStatus: Codable, Equatable, Identifiable {
     var boosted: Bool
     var id: String { address }
 
+    /// Per-device status text, in a list row or the menu bar.
+    func detail(enabled: Bool) -> String {
+        if !present { return L("away") }
+        if kind != .keyboard { return L("not supported") }
+        if !wanted { return "—" }
+        if !enabled { return L("off") }
+        return boosted ? L("latency 0") : L("idle")
+    }
+
     init(address: String, name: String, kind: DeviceKind, present: Bool, wanted: Bool, boosted: Bool) {
         self.address = address; self.name = name; self.kind = kind
         self.present = present; self.wanted = wanted; self.boosted = boosted
@@ -109,37 +118,50 @@ struct AgentStatus: Codable, Equatable {
         IPC.post(.statusChanged)
     }
 
+    /// The engine republishes at least this often. A silence of several beats means it stopped.
+    static let heartbeatInterval: TimeInterval = 5
+
     /// The engine writes every few seconds; a long silence means it is not running.
-    var agentAlive: Bool { Date().timeIntervalSince(updated) < 15 }
+    var agentAlive: Bool { Date().timeIntervalSince(updated) < Self.heartbeatInterval * 3 }
 
     enum Health: String, Codable { case good, fair, poor, unknown }
+
+    /// Shared by `health` and `healthProblem`, so the verdict and the explanation cannot
+    /// disagree about what counts as bad.
+    private enum Threshold {
+        static let radioDropsPerHour = 10
+        static let poorLossPercent = 10.0
+        static let poorRSSI = -75
+        static let fairLossPercent = 2.0
+        static let fairRSSI = -65
+    }
 
     /// A verdict on the link, from the two numbers that actually predict how it feels.
     /// Thresholds come from measurements on a link that worked: -49 dBm with 0 % loss.
     var health: Health {
-        if radioCyclesLastHour >= 10 { return .poor }
+        if radioCyclesLastHour >= Threshold.radioDropsPerHour { return .poor }
         guard let rssi else { return .unknown }
         let loss = lossPercent ?? 0
-        if loss > 10 || rssi < -75 { return .poor }
-        if loss > 2 || rssi < -65 { return .fair }
+        if loss > Threshold.poorLossPercent || rssi < Threshold.poorRSSI { return .poor }
+        if loss > Threshold.fairLossPercent || rssi < Threshold.fairRSSI { return .fair }
         return .good
     }
 
     /// What is wrong with the link, in one line, or nil when nothing is.
     var healthProblem: String? {
-        if radioCyclesLastHour >= 10 {
+        if radioCyclesLastHour >= Threshold.radioDropsPerHour {
             return L("The Bluetooth radio went down %d times in the last hour. Check whether the Mac keeps sleeping.", radioCyclesLastHour)
         }
-        if let loss = lossPercent, loss > 10 {
+        if let loss = lossPercent, loss > Threshold.poorLossPercent {
             return L("%@ %% of the keyboard's packets are not reaching the Mac. Something nearby is transmitting on 2.4 GHz.", String(format: "%.0f", loss))
         }
-        if let rssi, rssi < -75 {
+        if let rssi, rssi < Threshold.poorRSSI {
             return L("Signal at %d dBm. The keyboard is too far away, or something is in the way.", rssi)
         }
-        if let loss = lossPercent, loss > 2 {
+        if let loss = lossPercent, loss > Threshold.fairLossPercent {
             return L("%@ %% packet loss. Usable, but there is interference around.", String(format: "%.0f", loss))
         }
-        if let rssi, rssi < -65 {
+        if let rssi, rssi < Threshold.fairRSSI {
             return L("Signal at %d dBm, weaker than it should be.", rssi)
         }
         return nil

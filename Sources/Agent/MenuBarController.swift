@@ -41,7 +41,7 @@ final class MenuBarController {
         if !chosen.isEmpty {
             menu.addItem(.separator())
             for device in chosen {
-                let detail = !device.present ? L("away") : (device.boosted ? L("latency 0") : L("idle"))
+                let detail = device.detail(enabled: settings.enabled)
                 let entry = NSMenuItem(title: "\(device.name) — \(detail)", action: nil, keyEquivalent: "")
                 entry.isEnabled = false
                 menu.addItem(entry)

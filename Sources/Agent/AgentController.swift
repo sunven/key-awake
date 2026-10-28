@@ -79,9 +79,7 @@ final class AgentController {
     /// Safety net: if the file changes without a notification (hand-edited, restored from
     /// a backup), the engine still notices on the next tick.
     private func reloadSettingsIfFileChanged() {
-        let stamp = Self.settingsModified()
-        guard stamp != settingsStamp else { return }
-        settingsStamp = stamp
+        guard Self.settingsModified() != settingsStamp else { return }
         reloadSettings()
     }
 
@@ -129,6 +127,9 @@ final class AgentController {
         var devices: [DeviceStatus] = []
         var anyBoosted = false
         var learnedSomething = false
+        // One idle query per tick, not one per device.
+        let idleLimit = settings.idleReleaseSeconds
+        let idleSeconds = idleLimit == 0 ? 0 : ActivityMonitor.keyboardIdleSeconds()
 
         for device in live {
             let kind = inventory.kind(for: device.address)
@@ -144,9 +145,7 @@ final class AgentController {
                     Log.write("aprendida identidad de \(device.name): \(device.address)")
                     learnedSomething = true
                 }
-                let idle = ActivityMonitor.keyboardIdleSeconds()
-                let keepAwake = settings.idleReleaseSeconds == 0
-                    || idle < Double(settings.idleReleaseSeconds)
+                let keepAwake = idleLimit == 0 || idleSeconds < Double(idleLimit)
                 if keepAwake { engine.boost(device) } else { engine.release(device.address) }
             } else {
                 engine.release(device.address)
@@ -190,7 +189,7 @@ final class AgentController {
         // whole point: an intermittent fault has to leave a trace, or the next time it shows
         // up all anyone can do is blame whatever changed since.
         let now = Date()
-        if anyBoosted { if boostedSince == nil { boostedSince = now } } else { boostedSince = nil }
+        boostedSince = anyBoosted ? (boostedSince ?? now) : nil
 
         if now.timeIntervalSince(lastRSSISample) >= 10 {
             lastRSSISample = now
@@ -221,7 +220,7 @@ final class AgentController {
             previous.updated = status.updated
             changed = previous != status
         }
-        guard changed || Date().timeIntervalSince(lastWrite) >= 5 else { return }
+        guard changed || Date().timeIntervalSince(lastWrite) >= AgentStatus.heartbeatInterval else { return }
         status.save()
         lastPublished = status
         lastWrite = Date()

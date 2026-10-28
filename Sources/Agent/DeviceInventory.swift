@@ -48,17 +48,8 @@ final class DeviceInventory {
     }
 
     private static func parseSystemProfiler() -> [String: DeviceKind] {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/sbin/system_profiler")
-        task.arguments = ["SPBluetoothDataType"]
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError = FileHandle.nullDevice
-        do { try task.run() } catch { return [:] }
-
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        task.waitUntilExit()
-        guard let text = String(data: data, encoding: .utf8) else { return [:] }
+        guard let data = ProcessRunner.output("/usr/sbin/system_profiler", ["SPBluetoothDataType"]),
+              let text = String(data: data, encoding: .utf8) else { return [:] }
 
         // Within each device block, "Address:" comes before "Minor Type:".
         var result: [String: DeviceKind] = [:]
