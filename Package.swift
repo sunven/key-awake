@@ -19,5 +19,10 @@ let package = Package(
             dependencies: ["KeyAwakeCore"],
             path: "Tests/SettingsTests"
         ),
+        .testTarget(
+            name: "KeyAwakeFormatsTests",
+            dependencies: ["KeyAwakeCore"],
+            path: "Tests/FormatsTests"
+        ),
     ]
 )

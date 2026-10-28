@@ -103,6 +103,15 @@ If the engine is not running, the interface writes the file directly: with no se
 there is nothing to race. A hand-edited file is still picked up by the engine's
 modification-date check, which then broadcasts the change back to the interface.
 
+### External text
+
+The two parses the engine depends on live in `Sources/Formats`: `SystemProfiler` maps
+`system_profiler SPBluetoothDataType` to device kinds, and `BluetoothdLog` sums the
+`rx [S=…:F=…]` counters into `LinkCounters`. Both take text and return domain values; the
+process call stays in `ProcessRunner`. The inventory's refresh cadence is `RefreshPolicy` in
+`Sources/Policy`, tested by driving time through its interface. `swift test` covers both with
+text fixtures, so a macOS output change fails a test instead of silently classifying nothing.
+
 ## State machine
 
 ```

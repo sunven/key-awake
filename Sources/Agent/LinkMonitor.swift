@@ -20,8 +20,6 @@ final class LinkMonitor {
     private var sampling = false
     private let queue = DispatchQueue(label: "keyawake.linkmonitor")
     private var radioChanges: [Date] = []
-    /// Below this many packets in the window, the loss percentage is statistically empty.
-    private static let minimumPacketsForLoss = 200
 
     /// Call whenever the Bluetooth radio changes state; the count feeds the diagnosis.
     func noteRadioStateChange() {
@@ -57,23 +55,7 @@ final class LinkMonitor {
                                               ["show", "--last", "65s", "--debug", "--style", "compact",
                                                "--predicate", #"process == "bluetoothd" AND category == "Server.Core""#]),
               let text = String(data: data, encoding: .utf8) else { return nil }
-
-        var ok = 0, failed = 0
-        for line in text.split(separator: "\n") {
-            // Format: rx [S=  12:F=   3]
-            guard let range = line.range(of: "rx [S=") else { continue }
-            let tail = line[range.upperBound...]
-            let numbers = tail.prefix(20).split(whereSeparator: { !"0123456789".contains($0) })
-            if numbers.count >= 2, let s = Int(numbers[0]), let f = Int(numbers[1]) {
-                ok += s; failed += f
-            }
-        }
-        // A percentage over a handful of packets is noise, not a measurement. While nobody
-        // is typing the link carries almost nothing, and 11 failures out of 14 reads as
-        // 79 % when it means nothing at all. Below the threshold, report no figure rather
-        // than a frightening one.
-        let total = ok + failed
-        return total >= Self.minimumPacketsForLoss ? Double(failed) * 100 / Double(total) : nil
+        return BluetoothdLog.counters(from: text).lossPercent()
     }
 
     private func append(boosted: Bool, bluetooth: String, device: String) {

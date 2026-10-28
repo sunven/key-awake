@@ -44,6 +44,10 @@ One of the hardware addresses belonging to a device identity.
 **Live device**:
 A device visible through CoreBluetooth right now.
 
+**Device inventory**:
+The engine's knowledge of which hardware addresses belong to keyboards, pointing devices, or other devices.
+_Avoid_: device cache, classifier
+
 **Absent device**:
 A device identity with no live address. It is still listed because it remains configured.
 
@@ -60,6 +64,10 @@ An address or real name the engine adds to an existing device identity after see
 
 **Signal (RSSI)**:
 Signal strength in dBm, read only while the link is held.
+
+**Link counters**:
+The success and failure packet counts for a link over the measurement window. They become packet loss only once enough traffic exists to measure.
+_Avoid_: stats, counters
 
 **Packet loss**:
 Share of the keyboard's packets the Mac failed to receive, measured from bluetoothd link statistics over a window.
