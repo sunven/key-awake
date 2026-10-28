@@ -90,6 +90,12 @@ The user's persistent configuration: enabled, menu bar icon, idle release period
 An intent from the interface to the engine to change settings. The engine owns the write whenever it is running; the interface falls back to writing only when there is no engine.
 _Avoid_: settings patch, update message
 
+### Presentation
+
+**Status presentation**:
+The module that turns settings and the engine's status into what the interface and menu bar show: state, problem, tone, symbol, headlines, and per-device detail.
+_Avoid_: status formatter, UI model
+
 ### Policy
 
 **Tick**:

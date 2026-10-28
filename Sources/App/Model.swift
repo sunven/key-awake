@@ -51,34 +51,28 @@ final class Model: ObservableObject {
         launchAtLogin = LoginItem.isEnabled
     }
 
+    /// What the window should say, from the one module that decides it.
+    private var presentation: StatusPresentation.Presentation {
+        let liveness: StatusPresentation.EngineLiveness =
+            status.agentAlive ? .alive : .absent(launchAtLogin: launchAtLogin)
+        return StatusPresentation.describe(settings: settings, status: status, liveness: liveness)
+    }
+
     /// What the user needs to be told, if anything.
-    var problem: String? {
-        // A stale status file says nothing about Bluetooth: without the engine it is either
-        // the default object or the last reading before it stopped. Asking about Bluetooth
-        // first made a dead engine show up as "Bluetooth state unknown."
-        if !status.agentAlive {
-            return launchAtLogin
-                ? L("The engine is not responding. Try turning “Start at login” off and on again.")
-                : L("The engine is not running. Reopen KeyAwake to start it.")
-        }
-        if let issue = status.bluetooth.problem { return issue }
-        if !status.apiAvailable {
-            return L("This version of macOS no longer exposes the latency setting. KeyAwake cannot help.")
-        }
-        return nil
-    }
+    var problem: String? { presentation.problem }
 
-    var headline: String {
-        if !settings.enabled { return L("Disabled") }
-        if problem != nil { return L("Stopped") }
-        return status.active ? L("Boosting") : L("Idle")
-    }
+    var headline: String { presentation.shortHeadline }
 
-    var isBoosting: Bool { settings.enabled && problem == nil && status.active }
+    var symbol: String { presentation.symbol }
+
+    var isBoosting: Bool { presentation.state == .boosting }
 
     var stateColor: Color {
-        if !settings.enabled || problem != nil { return .secondary }
-        return status.active ? .green : .orange
+        switch presentation.tone {
+        case .neutral:   return .secondary
+        case .positive:  return .green
+        case .attention: return .orange
+        }
     }
 
     var latencyChoice: Settings.LatencyChoice? {

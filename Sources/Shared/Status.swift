@@ -41,15 +41,6 @@ struct DeviceStatus: Codable, Equatable, Identifiable {
     var boosted: Bool
     var id: String { address }
 
-    /// Per-device status text, in a list row or the menu bar.
-    func detail(enabled: Bool) -> String {
-        if !present { return L("away") }
-        if kind != .keyboard { return L("not supported") }
-        if !wanted { return "—" }
-        if !enabled { return L("off") }
-        return boosted ? L("latency 0") : L("idle")
-    }
-
     init(address: String, name: String, kind: DeviceKind, present: Bool, wanted: Bool, boosted: Bool) {
         self.address = address; self.name = name; self.kind = kind
         self.present = present; self.wanted = wanted; self.boosted = boosted

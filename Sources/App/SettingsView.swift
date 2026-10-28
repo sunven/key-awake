@@ -55,7 +55,7 @@ struct SettingsView: View {
 
     private var header: some View {
         HStack(spacing: 12) {
-            Image(systemName: model.isBoosting ? "bolt.fill" : "bolt")
+            Image(systemName: model.symbol)
                 .font(.system(size: 26))
                 .foregroundStyle(model.isBoosting ? Color.accentColor : Color.secondary)
                 .frame(width: 30)
@@ -103,7 +103,7 @@ struct SettingsView: View {
                                     .font(.caption).foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Text(device.detail(enabled: model.settings.enabled))
+                            Text(StatusPresentation.detail(for: device, enabled: model.settings.enabled))
                                 .font(.caption).monospacedDigit()
                                 .foregroundStyle(device.boosted ? Color.green : Color.secondary)
                         }

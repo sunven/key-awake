@@ -103,6 +103,14 @@ If the engine is not running, the interface writes the file directly: with no se
 there is nothing to race. A hand-edited file is still picked up by the engine's
 modification-date check, which then broadcasts the change back to the interface.
 
+### Status presentation
+
+`StatusPresentation` in `Sources/Shared` owns the precedence for what the window and the menu
+bar say: engine liveness, Bluetooth state, API availability, then boost activity. It returns a
+`Presentation` with a state, a problem, a tone, an SF Symbol and both headlines, plus the
+per-device detail. The window maps tone to colour; the menu bar uses the symbol and the longer
+headline. Neither surface re-derives the order.
+
 ### External text
 
 The two parses the engine depends on live in `Sources/Formats`: `SystemProfiler` maps

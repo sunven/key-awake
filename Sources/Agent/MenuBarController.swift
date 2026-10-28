@@ -19,21 +19,14 @@ final class MenuBarController {
     deinit { NSStatusBar.system.removeStatusItem(item) }
 
     func update(status: AgentStatus, settings: Settings) {
-        let symbol: String
-        if !settings.enabled              { symbol = "bolt.slash" }
-        else if status.bluetooth != .on   { symbol = "bolt.slash" }
-        else if status.active             { symbol = "bolt.fill" }
-        else                              { symbol = "bolt" }
-        item.button?.image = NSImage(systemSymbolName: symbol, accessibilityDescription: "KeyAwake")
+        let presentation = StatusPresentation.describe(settings: settings, status: status,
+                                                       liveness: .alive)
+        item.button?.image = NSImage(systemSymbolName: presentation.symbol,
+                                     accessibilityDescription: "KeyAwake")
         item.button?.image?.isTemplate = true
 
         let menu = NSMenu()
-        let headline: String
-        if !settings.enabled                      { headline = L("KeyAwake — disabled") }
-        else if let problem = status.bluetooth.problem { headline = problem }
-        else if status.active                     { headline = L("KeyAwake — boosting") }
-        else                                      { headline = L("KeyAwake — idle") }
-        let header = NSMenuItem(title: headline, action: nil, keyEquivalent: "")
+        let header = NSMenuItem(title: presentation.menuHeadline, action: nil, keyEquivalent: "")
         header.isEnabled = false
         menu.addItem(header)
 
@@ -41,7 +34,7 @@ final class MenuBarController {
         if !chosen.isEmpty {
             menu.addItem(.separator())
             for device in chosen {
-                let detail = device.detail(enabled: settings.enabled)
+                let detail = StatusPresentation.detail(for: device, enabled: settings.enabled)
                 let entry = NSMenuItem(title: "\(device.name) — \(detail)", action: nil, keyEquivalent: "")
                 entry.isEnabled = false
                 menu.addItem(entry)
