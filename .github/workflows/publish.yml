@@ -1,0 +1,98 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: xcode-27
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Validate tag and derive version
+        id: version
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Tag $tag is not vX.Y.Z or vX.Y.Z-suffix" >&2
+            exit 1
+          fi
+          version="${tag#v}"
+          version="${version%%-*}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [[ "$tag" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "build=$(git rev-list --count HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Require the macOS 27 toolchain
+        run: |
+          set -euo pipefail
+          macos=$(sw_vers -productVersion)
+          xcode=$(xcodebuild -version | awk 'NR==1 {print $2}')
+          echo "macOS $macos, Xcode $xcode"
+          if [[ "$macos" != 27.* || "$xcode" != 27.* ]]; then
+            echo "KeyAwake targets macOS 27; refusing to build on macOS $macos / Xcode $xcode" >&2
+            exit 1
+          fi
+
+      - name: Test
+        run: swift test
+
+      - name: Build DMG and ZIP
+        env:
+          KEYAWAKE_CI: '1'
+          KEYAWAKE_VERSION: ${{ steps.version.outputs.version }}
+          KEYAWAKE_BUILD: ${{ steps.version.outputs.build }}
+        run: ./scripts/make-release.sh
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ steps.version.outputs.version }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          notes=$(mktemp)
+          cat > "$notes" <<'EOF'
+          ## Install
+
+          Download the DMG, open it, and drag `KeyAwake.app` to Applications. The app is not
+          notarised: on first launch, right-click the app and choose **Open**, or run
+          `xattr -dr com.apple.quarantine /Applications/KeyAwake.app`.
+
+          ## Requirements
+
+          macOS 27. Keyboards only. Ad-hoc signed.
+
+          EOF
+          gh api "repos/${GITHUB_REPOSITORY}/releases/generate-notes" \
+            -f tag_name="$TAG" -f target_commitish="$GITHUB_SHA" --jq .body >> "$notes"
+
+          title="KeyAwake $VERSION"
+          flag=""
+          [[ "$PRERELEASE" == "true" ]] && flag="--prerelease"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/*.dmg dist/*.zip --clobber
+            gh release edit "$TAG" --title "$title" --notes-file "$notes" $flag
+          else
+            gh release create "$TAG" dist/*.dmg dist/*.zip \
+              --title "$title" --notes-file "$notes" --verify-tag $flag
+          fi

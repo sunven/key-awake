@@ -5,10 +5,15 @@
 # name and email in the binary, and macOS shows them in Login Items to everyone who
 # installs it. For a third party a self-signed certificate buys nothing over ad-hoc:
 # without Apple notarisation, Gatekeeper warns either way.
+#
+# KEYAWAKE_VERSION / KEYAWAKE_BUILD stamp the bundle when set; the release workflow does.
+# KEYAWAKE_CI=1 skips the final rebuild with the local signing identity.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 ROOT="$PWD"
-VERSION="${1:-1.0}"
+VERSION="${KEYAWAKE_VERSION:-${1:-1.1.1}}"
+BUILD_NUMBER="${KEYAWAKE_BUILD:-3}"
+export KEYAWAKE_VERSION="$VERSION" KEYAWAKE_BUILD="$BUILD_NUMBER"
 
 mkdir -p dist
 rm -f "dist/KeyAwake-$VERSION.dmg" "dist/KeyAwake-$VERSION.zip"
@@ -28,8 +33,12 @@ ln -s /Applications "$STAGE/Applications"       # the classic drag-and-drop layo
 hdiutil create -quiet -volname "KeyAwake" -srcfolder "$STAGE" \
   -ov -format UDZO "dist/KeyAwake-$VERSION.dmg"
 
-echo "▸ Restoring your local build (signed with your own identity)"
-./build.sh >/dev/null 2>&1 || { echo "local rebuild failed"; exit 1; }
+if [[ "${KEYAWAKE_CI:-0}" == "1" ]]; then
+  echo "▸ KEYAWAKE_CI=1 -> leaving the ad-hoc build in place"
+else
+  echo "▸ Restoring your local build (signed with your own identity)"
+  ./build.sh >/dev/null 2>&1 || { echo "local rebuild failed"; exit 1; }
+fi
 
 echo
 echo "✓ Done:"

@@ -4,6 +4,8 @@ set -euo pipefail
 cd "$(dirname "$0")"
 ROOT="$PWD"
 BUILD="$ROOT/.build"
+VERSION="${KEYAWAKE_VERSION:-1.1.1}"
+BUILD_NUMBER="${KEYAWAKE_BUILD:-3}"
 rm -rf "$BUILD"; mkdir -p "$BUILD"
 
 SHARED=(Sources/Shared/*.swift)
@@ -59,8 +61,8 @@ bundle() {           # bundle <name> <bundle-id> <LSUIElement true|false> <direc
     <key>CFBundleLocalizations</key>
     <array><string>en</string><string>es</string><string>zh-Hans</string></array>
     <key>CFBundlePackageType</key>             <string>APPL</string>
-    <key>CFBundleShortVersionString</key>      <string>1.1.1</string>
-    <key>CFBundleVersion</key>                 <string>3</string>
+    <key>CFBundleShortVersionString</key>      <string>$VERSION</string>
+    <key>CFBundleVersion</key>                 <string>$BUILD_NUMBER</string>
     <key>LSMinimumSystemVersion</key>          <string>14.0</string>
     <key>CFBundleIconFile</key>                <string>AppIcon</string>
     <key>LSUIElement</key>                     <$agent/>

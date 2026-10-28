@@ -114,3 +114,12 @@ The value BoostPolicy returns for one tick.
 
 **Policy state**:
 The facts BoostPolicy carries from one tick to the next: when boosting began, when signal and history were last sampled, and the names known for absent devices.
+
+### Delivery
+
+**Publication**:
+The GitHub release for one version tag, carrying the app as a DMG and ZIP.
+_Avoid_: release (see **Release**), deployment
+
+**Version tag**:
+A tag of the form `vX.Y.Z`, optionally with a `-suffix` that marks the publication as a prerelease.
