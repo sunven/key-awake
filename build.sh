@@ -7,6 +7,7 @@ BUILD="$ROOT/.build"
 rm -rf "$BUILD"; mkdir -p "$BUILD"
 
 SHARED=(Sources/Shared/*.swift)
+POLICY=(Sources/Policy/*.swift)
 
 # Signing with a stable identity is what makes the Bluetooth permission survive rebuilds.
 # With an ad-hoc signature macOS cannot recognise the app between builds and asks again.
@@ -90,7 +91,7 @@ bundle KeyAwake com.keyawake.app false "$ROOT"
 echo "▸ Engine (KeyAwakeAgent), nested as a login item"
 swiftc -O -swift-version 5 \
   -framework AppKit -framework CoreBluetooth -framework CoreGraphics \
-  -o "$BUILD/KeyAwakeAgent" "${SHARED[@]}" Sources/Agent/*.swift
+  -o "$BUILD/KeyAwakeAgent" "${SHARED[@]}" "${POLICY[@]}" Sources/Agent/*.swift
 LOGIN_ITEMS="$ROOT/KeyAwake.app/Contents/Library/LoginItems"
 mkdir -p "$LOGIN_ITEMS"
 bundle KeyAwakeAgent com.keyawake.agent true "$LOGIN_ITEMS"

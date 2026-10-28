@@ -11,19 +11,16 @@ final class AgentController {
     private var settings = Settings.load()
     private var lastPublished: AgentStatus?
     private var lastWrite: Date = .distantPast
-    private var knownNames: [String: String] = [:]
+    private var policyState = BoostPolicy.State(boostedSince: nil)
     private var timer: Timer?
     private var observers: [NSObjectProtocol] = []
     private var settingsStamp: Date?
-    private var lastRSSISample: Date = .distantPast
-    private var lastHistoryWrite: Date = .distantPast
-    /// When the link last became continuously boosted. A loss figure measured across a
-    /// reconnect counts the silence as lost packets and reports a fault that is not there.
-    private var boostedSince: Date?
 
     func start() {
         // Names of absent devices, so they are not shown as "unknown".
-        for device in AgentStatus.load().devices { knownNames[device.address.uppercased()] = device.name }
+        for device in AgentStatus.load().devices {
+            policyState.knownNames[device.address.uppercased()] = device.name
+        }
 
         observers.append(IPC.observe(.settingsChanged) { [weak self] in
             self?.reloadSettings()
@@ -103,114 +100,78 @@ final class AgentController {
         }
     }
 
-    /// Whether a live device is one the user asked for.
-    ///
-    /// An address match is definitive. A name match is a fallback for the one case it exists
-    /// to cover — the device came back under a new address — so it only applies when none of
-    /// that record's known addresses is currently live. Without that condition a second
-    /// keyboard reporting the same name as the first would be adopted silently.
-    private func isWanted(_ device: LiveDevice, live: [LiveDevice]) -> Bool {
-        guard settings.enabled else { return false }
-        if settings.boosts(address: device.address) { return true }
-        guard device.hasRealName, let record = settings.record(forName: device.name) else { return false }
-        return !record.addresses.contains { alias in
-            live.contains { $0.address.caseInsensitiveCompare(alias) == .orderedSame }
-        }
-    }
-
     private func tick() {
         reloadSettingsIfFileChanged()
+
         let live = engine.liveDevices()
         inventory.refreshIfNeeded(addresses: live.map(\.address))
-        for device in live { knownNames[device.address.uppercased()] = device.name }
 
-        var devices: [DeviceStatus] = []
-        var anyBoosted = false
-        var learnedSomething = false
-        // One idle query per tick, not one per device.
+        // Every address the policy may ask about, resolved once per tick.
+        var kinds: [String: DeviceKind] = [:]
+        for device in live {
+            kinds[device.address.uppercased()] = inventory.kind(for: device.address)
+        }
+        for record in settings.boosted {
+            for alias in record.addresses {
+                let key = alias.uppercased()
+                if kinds[key] == nil { kinds[key] = inventory.kind(for: alias) }
+            }
+        }
+
+        let connected = Set(live.filter { $0.peripheral.state == .connected }
+                                .map { $0.address.uppercased() })
         let idleLimit = settings.idleReleaseSeconds
         let idleSeconds = idleLimit == 0 ? 0 : ActivityMonitor.keyboardIdleSeconds()
 
-        for device in live {
-            let kind = inventory.kind(for: device.address)
-            // Keyboards only. On macOS 27.0.1, asking for low latency on a pointing device
-            // as well makes bluetoothd's HID layer enter its multi-HID power mode and
-            // re-apply the keyboard's idle profile (latency 44) right after the request.
-            let wanted = kind == .keyboard && isWanted(device, live: live)
-            if wanted {
-                // Recognising a device by one identifier teaches us the other, so the next
-                // power cycle cannot drop it out of the set.
-                if settings.learn(address: device.address, name: device.name,
-                                  nameIsReal: device.hasRealName) {
-                    Log.write("aprendida identidad de \(device.name): \(device.address)")
-                    learnedSomething = true
-                }
-                let keepAwake = idleLimit == 0 || idleSeconds < Double(idleLimit)
-                if keepAwake { engine.boost(device) } else { engine.release(device.address) }
-            } else {
-                engine.release(device.address)
+        let input = BoostPolicy.Input(
+            settings: settings,
+            live: live.map { ObservedDevice(address: $0.address, name: $0.name,
+                                            hasRealName: $0.hasRealName) },
+            kinds: kinds,
+            connected: connected,
+            idleSeconds: idleSeconds,
+            now: Date())
+        let decision = BoostPolicy.decide(policyState, input)
+        policyState = decision.state
+
+        let liveByAddress = Dictionary(live.map { ($0.address.uppercased(), $0) },
+                                       uniquingKeysWith: { first, _ in first })
+        for action in decision.actions {
+            switch action {
+            case .boost(let address):
+                if let device = liveByAddress[address.uppercased()] { engine.boost(device) }
+            case .release(let address):
+                engine.release(address)
             }
-            let boosted = engine.isBoosted(device.address)
-            anyBoosted = anyBoosted || boosted
-            devices.append(DeviceStatus(address: device.address, name: device.name,
-                                        kind: kind, present: true, wanted: wanted, boosted: boosted))
         }
 
-        // One write per tick, not one per device: each save costs a file write, a notification,
-        // a reload and a recursive tick.
-        if learnedSomething {
+        // One write per tick, not one per device: each save costs a file write, a
+        // notification, a reload and a recursive tick.
+        if !decision.learned.isEmpty {
+            for identity in decision.learned {
+                if settings.learn(address: identity.address, name: identity.name,
+                                  nameIsReal: identity.hasRealName) {
+                    Log.write("aprendida identidad de \(identity.name): \(identity.address)")
+                }
+            }
             settings.save()
             settingsStamp = Self.settingsModified()
         }
 
-        // Configured but not visible: one row per record, so a device with several known
-        // addresses cannot render twice.
-        for record in settings.boosted {
-            let liveHere = live.contains { device in
-                record.matches(address: device.address)
-                    || (device.hasRealName && record.matches(name: device.name))
-            }
-            guard !liveHere else { continue }
-            // Prefer an address already known to be a keyboard: a record can carry aliases
-            // for both halves of a keyboard/mouse combo, and only the keyboard is shown.
-            let address = record.addresses.first { inventory.kind(for: $0) == .keyboard }
-                ?? record.addresses.first
-            guard let address else { continue }
-            let kind = inventory.kind(for: address)
-            guard kind != .pointing else { continue }
-            let name = record.name.isEmpty ? (knownNames[address.uppercased()] ?? address) : record.name
-            devices.append(DeviceStatus(address: address, name: name,
-                                        kind: kind,
-                                        present: false, wanted: true, boosted: false))
-        }
-        devices.sort { ($0.present ? 0 : 1, $0.name.lowercased()) < ($1.present ? 0 : 1, $1.name.lowercased()) }
-
-        // Signal strength every 10 s, and a history row every minute. The history is the
-        // whole point: an intermittent fault has to leave a trace, or the next time it shows
-        // up all anyone can do is blame whatever changed since.
-        let now = Date()
-        boostedSince = anyBoosted ? (boostedSince ?? now) : nil
-
-        if now.timeIntervalSince(lastRSSISample) >= 10 {
-            lastRSSISample = now
-            engine.sampleRSSI()
-        }
-        if now.timeIntervalSince(lastHistoryWrite) >= 60 {
-            lastHistoryWrite = now
-            // Only trust the loss figure once the link has been up for longer than the
-            // window it is measured over. Otherwise the reconnect itself reads as a fault.
-            let settled = boostedSince.map { now.timeIntervalSince($0) >= 70 } ?? false
-            monitor.sampleAndRecord(boosted: anyBoosted, measureLoss: settled,
+        if decision.sampling.readRSSI { engine.sampleRSSI() }
+        if decision.sampling.recordHistory {
+            monitor.sampleAndRecord(boosted: decision.boosted,
+                                    measureLoss: decision.sampling.measureLoss,
                                     bluetooth: engine.state.rawValue,
-                                    deviceName: devices.first(where: \.boosted)?.name ?? "-")
+                                    deviceName: decision.devices.first(where: \.boosted)?.name ?? "-")
         }
 
-        publish(AgentStatus(bluetooth: engine.state, active: anyBoosted,
-                            apiAvailable: engine.apiAvailable, devices: devices,
+        publish(AgentStatus(bluetooth: engine.state, active: decision.boosted,
+                            apiAvailable: engine.apiAvailable, devices: decision.devices,
                             rssi: monitor.current.rssi,
                             lossPercent: monitor.current.lossPercent,
                             radioCyclesLastHour: monitor.current.radioCyclesLastHour,
-                            updated: now))
+                            updated: input.now))
     }
 
     /// Writes only when something changed, or every 5 s so the interface knows we are alive.

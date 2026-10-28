@@ -51,11 +51,6 @@ final class BluetoothEngine: NSObject, CBCentralManagerDelegate, CBPeripheralDel
         }
     }
 
-    func isBoosted(_ address: String) -> Bool {
-        guard let p = held[address] else { return false }
-        return p.state == .connected
-    }
-
     /// Idempotent: safe to call on every tick.
     ///
     /// The latency request is only re-sent on (re)connect or every 30 s. Repeating it

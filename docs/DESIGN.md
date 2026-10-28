@@ -78,6 +78,19 @@ They communicate through `~/Library/Application Support/KeyAwake/{settings,statu
 Darwin notifications. The agent also re-reads settings when the file's modification date changes,
 so hand-editing the JSON works too.
 
+### BoostPolicy
+
+The engine's rules live in `Sources/Policy/BoostPolicy.swift`, not in `AgentController`.
+`BoostPolicy.decide(_:_:)` is a pure function: settings, live devices, their kinds, which
+addresses are connected, idle time and the current instant go in; one `Decision` comes out —
+boost/release actions, learned identities, the status rows, which samples are due, and the
+state for the next tick. Live devices are mapped to `ObservedDevice`, so CoreBluetooth stays
+out of the module. The controller supplies the snapshot, applies the actions, persists learned
+identities once, and publishes.
+
+Change a boost rule here, and test it through the same interface: `swift test` runs
+`Tests/PolicyTests` without Bluetooth hardware or a running app.
+
 ## State machine
 
 ```
