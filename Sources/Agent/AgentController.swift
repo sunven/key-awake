@@ -22,8 +22,8 @@ final class AgentController {
             policyState.knownNames[device.address.uppercased()] = device.name
         }
 
-        observers.append(IPC.observe(.settingsChanged) { [weak self] in
-            self?.reloadSettings()
+        observers.append(IPC.observeCommands { [weak self] command in
+            self?.apply(command)
         })
 
         // Sleeping releases the links: boosting a closed laptop makes no sense.
@@ -56,6 +56,27 @@ final class AgentController {
         Log.write("motor arrancado")
     }
 
+    /// Applies one settings intent. The engine is the only writer: save once, then propagate.
+    private func apply(_ command: SettingsCommand) {
+        let previousLevel = settings.latencyLevel
+        guard settings.apply(command) else { return }
+
+        settings.save()
+        settingsStamp = Self.settingsModified()
+        engine.latencyLevel = settings.latencyLevel
+        if previousLevel != settings.latencyLevel { engine.invalidateRequests() }
+        Log.write("ajustes: activado=\(settings.enabled) barra=\(settings.showMenuBarIcon) "
+                  + "reposo=\(settings.idleReleaseSeconds)s latencia=\(settings.latencyLevel)")
+
+        // The menu bar may remove itself in response to this command; deferring keeps the
+        // controller alive until the current menu action returns.
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.syncMenuBar()
+            self.tick()
+        }
+    }
+
     /// Re-reads settings and propagates whatever changed.
     private func reloadSettings() {
         let previousLevel = settings.latencyLevel
@@ -74,10 +95,11 @@ final class AgentController {
     }
 
     /// Safety net: if the file changes without a notification (hand-edited, restored from
-    /// a backup), the engine still notices on the next tick.
+    /// a backup), the engine still notices on the next tick and tells the interface.
     private func reloadSettingsIfFileChanged() {
         guard Self.settingsModified() != settingsStamp else { return }
         reloadSettings()
+        IPC.post(.settingsChanged)
     }
 
     private func syncMenuBar() {
@@ -86,13 +108,11 @@ final class AgentController {
                 menuBar = MenuBarController(
                     onToggleEnabled: { [weak self] in
                         guard let self else { return }
-                        self.settings.enabled.toggle()
-                        self.settings.save()
+                        self.apply(.setEnabled(!self.settings.enabled))
                     },
                     onHideIcon: { [weak self] in
                         guard let self else { return }
-                        self.settings.showMenuBarIcon = false
-                        self.settings.save()
+                        self.apply(.setShowMenuBarIcon(false))
                     })
             }
         } else {

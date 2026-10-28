@@ -73,6 +73,15 @@ The verdict — good, fair, poor, unknown — derived from signal, packet loss, 
 **History**:
 The per-minute record of link health that lets an intermittent fault leave a trace.
 
+### Settings
+
+**Settings**:
+The user's persistent configuration: enabled, menu bar icon, idle release period, latency level, and the device identities to boost.
+
+**Settings command**:
+An intent from the interface to the engine to change settings. The engine owns the write whenever it is running; the interface falls back to writing only when there is no engine.
+_Avoid_: settings patch, update message
+
 ### Policy
 
 **Tick**:

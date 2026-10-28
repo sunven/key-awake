@@ -15,33 +15,34 @@ final class Model: ObservableObject {
         observers.append(IPC.observe(.statusChanged) { [weak self] in
             self?.status = .load()
         })
-        // The engine writes settings too, when it learns a device's second address. Without
-        // this, the next edit here would write back a stale copy and drop what it learned.
+        // The engine is the only writer; its broadcast is the authoritative settings update.
         observers.append(IPC.observe(.settingsChanged) { [weak self] in
             self?.settings = .load()
         })
-        // Safety net in case a notification is missed.
+        // Safety net for the status heartbeat; settings arrive by notification.
         timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
             self?.status = .load()
-            self?.settings = .load()
         }
     }
 
-    func edit(_ mutate: (inout Settings) -> Void) {
+    /// Applies a command locally so the window reacts at once, then lets the engine own the write.
+    func edit(_ command: SettingsCommand) {
         var copy = settings
-        mutate(&copy)
+        let changed = copy.apply(command)
         settings = copy
-        copy.save()
+        if LoginItem.isRunning {
+            IPC.send(command)
+        } else if changed {
+            copy.save()
+        }
     }
 
     func setBoosted(_ device: DeviceStatus, _ on: Bool) {
-        edit { settings in
-            if on {
-                settings.start(address: device.address, name: device.name,
-                               nameIsReal: !device.name.isEmpty && device.name != device.address)
-            } else {
-                settings.forget(address: device.address, name: device.name)
-            }
+        if on {
+            edit(.startDevice(address: device.address, name: device.name,
+                              nameIsReal: !device.name.isEmpty && device.name != device.address))
+        } else {
+            edit(.forgetDevice(address: device.address, name: device.name))
         }
     }
 

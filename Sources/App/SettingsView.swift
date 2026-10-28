@@ -65,7 +65,7 @@ struct SettingsView: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
-            Toggle("Enabled", isOn: binding(\.enabled))
+            Toggle("Enabled", isOn: binding(\.enabled) { .setEnabled($0) })
                 .help(L("When off, KeyAwake leaves every link alone."))
             Text(model.headline)
                 .font(.callout).bold()
@@ -164,7 +164,7 @@ struct SettingsView: View {
                         HStack(spacing: 8) {
                             Text(L("Link latency"))
                             Spacer(minLength: 4)
-                            Picker("", selection: binding(\.latencyLevel)) {
+                            Picker("", selection: binding(\.latencyLevel) { .setLatencyLevel($0) }) {
                                 ForEach(Settings.latencyChoices, id: \.level) { choice in
                                     Text(choice.label).tag(choice.level)
                                 }
@@ -180,7 +180,7 @@ struct SettingsView: View {
                         HStack(spacing: 8) {
                             Text(L("Release when idle"))
                             Spacer(minLength: 4)
-                            Picker("", selection: binding(\.idleReleaseSeconds)) {
+                            Picker("", selection: binding(\.idleReleaseSeconds) { .setIdleReleaseSeconds($0) }) {
                                 ForEach(Settings.idleChoices, id: \.seconds) { choice in
                                     Text(choice.label).tag(choice.seconds)
                                 }
@@ -203,7 +203,7 @@ struct SettingsView: View {
     private var options: some View {
         section(nil) {
             HStack(alignment: .top, spacing: 28) {
-                Toggle("Show in the menu bar", isOn: binding(\.showMenuBarIcon))
+                Toggle("Show in the menu bar", isOn: binding(\.showMenuBarIcon) { .setShowMenuBarIcon($0) })
                 VStack(alignment: .leading, spacing: 2) {
                     Toggle("Start at login", isOn: Binding(
                         get: { model.launchAtLogin },
@@ -257,10 +257,11 @@ struct SettingsView: View {
         })
     }
 
-    /// A two-way binding into the saved settings, so every control edits through the same path.
-    private func binding<T>(_ keyPath: WritableKeyPath<Settings, T>) -> Binding<T> {
+    /// A two-way binding into settings; every control maps its edit to one command.
+    private func binding<T>(_ keyPath: KeyPath<Settings, T>,
+                            _ command: @escaping (T) -> SettingsCommand) -> Binding<T> {
         Binding(get: { model.settings[keyPath: keyPath] },
-                set: { value in model.edit { $0[keyPath: keyPath] = value } })
+                set: { value in model.edit(command(value)) })
     }
 
     private func caption(_ text: String) -> some View {

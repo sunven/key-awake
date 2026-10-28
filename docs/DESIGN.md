@@ -91,6 +91,18 @@ identities once, and publishes.
 Change a boost rule here, and test it through the same interface: `swift test` runs
 `Tests/PolicyTests` without Bluetooth hardware or a running app.
 
+### Settings commands
+
+The engine is the only writer of `settings.json`. The interface sends a `SettingsCommand`
+(enable, menu bar icon, latency, idle release, start device, forget device) over a Darwin
+notification; the engine applies it once, saves, and broadcasts `settingsChanged`. The
+interface updates its own copy optimistically with the same `Settings.apply(_:)`, so the
+window reacts at once; the engine's broadcast is authoritative.
+
+If the engine is not running, the interface writes the file directly: with no second writer
+there is nothing to race. A hand-edited file is still picked up by the engine's
+modification-date check, which then broadcasts the change back to the interface.
+
 ## State machine
 
 ```
