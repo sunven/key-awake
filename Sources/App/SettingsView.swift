@@ -2,18 +2,25 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var model: Model
+    /// Reports the height the window needs to show everything without scrolling, so the
+    /// window can size itself instead of leaving a blank half under a short device list.
+    var onFittingHeight: (CGFloat) -> Void = { _ in }
 
     private let labelWidth: CGFloat = 170
 
     var body: some View {
         VStack(spacing: 0) {
-            header
+            measured(.header) { header }
             Divider()
-            ScrollView { content }
+            ScrollView { measured(.content) { content } }
             Divider()
-            footer
+            measured(.footer) { footer }
         }
         .frame(minWidth: 540, minHeight: 540)
+        .onPreferenceChange(FittingHeightKey.self) { parts in
+            guard parts.content > 0 else { return }
+            onFittingHeight(parts.total)
+        }
     }
 
     /// The body without the `ScrollView`. Used as-is by `body`, and separately it lets the
@@ -21,7 +28,6 @@ struct SettingsView: View {
     var content: some View {
         VStack(alignment: .leading, spacing: 14) {
             if let problem = model.problem { warning(problem, level: .orange) }
-            masterSwitch
             devices
             linkHealth
             performance
@@ -56,6 +62,10 @@ struct SettingsView: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
+            Toggle("Enabled", isOn: Binding(
+                get: { model.settings.enabled },
+                set: { value in model.edit { $0.enabled = value } }))
+                .help(L("When off, KeyAwake leaves every link alone."))
             Text(model.headline)
                 .font(.callout).bold()
                 .padding(.horizontal, 10).padding(.vertical, 4)
@@ -67,32 +77,21 @@ struct SettingsView: View {
 
     // MARK: - Sections
 
-    private var masterSwitch: some View {
-        section(nil) {
-            HStack {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Enabled").bold()
-                    Text("When off, KeyAwake leaves every link alone.")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-                Spacer()
-                Toggle("", isOn: Binding(
-                    get: { model.settings.enabled },
-                    set: { value in model.edit { $0.enabled = value } }))
-                    .labelsHidden()
-            }
-        }
+    /// Pointing devices are never boosted, so listing them only adds noise. Everything else
+    /// stays: a keyboard the inventory has not classified yet must not vanish from the list.
+    private var visibleDevices: [DeviceStatus] {
+        model.status.devices.filter { $0.kind != .pointing }
     }
 
     private var devices: some View {
         section(L("Bluetooth LE devices")) {
             VStack(alignment: .leading, spacing: 8) {
-                if model.status.devices.isEmpty {
-                    Text("No connected device in sight.")
+                if visibleDevices.isEmpty {
+                    Text("No keyboard in sight.")
                         .foregroundStyle(.secondary).font(.callout)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
-                    ForEach(model.status.devices) { device in
+                    ForEach(visibleDevices) { device in
                         HStack(spacing: 10) {
                             Toggle("", isOn: Binding(
                                 get: { device.wanted },
@@ -160,52 +159,65 @@ struct SettingsView: View {
 
     private var performance: some View {
         section(L("Performance")) {
-            VStack(alignment: .leading, spacing: 12) {
-                row(L("Link latency")) {
-                    Picker("", selection: Binding(
-                        get: { model.settings.latencyLevel },
-                        set: { value in model.edit { $0.latencyLevel = value } })) {
-                            ForEach(Settings.latencyChoices, id: \.level) { choice in
-                                Text(choice.label).tag(choice.level)
-                            }
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .top, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 8) {
+                            Text(L("Link latency"))
+                            Spacer(minLength: 4)
+                            Picker("", selection: Binding(
+                                get: { model.settings.latencyLevel },
+                                set: { value in model.edit { $0.latencyLevel = value } })) {
+                                    ForEach(Settings.latencyChoices, id: \.level) { choice in
+                                        Text(choice.label).tag(choice.level)
+                                    }
+                                }
+                                .labelsHidden()
+                                .controlSize(.small)
                         }
-                        .labelsHidden()
+                        if let detail = model.latencyDetail { caption(detail) }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 8) {
+                            Text(L("Release when idle"))
+                            Spacer(minLength: 4)
+                            Picker("", selection: Binding(
+                                get: { model.settings.idleReleaseSeconds },
+                                set: { value in model.edit { $0.idleReleaseSeconds = value } })) {
+                                    ForEach(Settings.idleChoices, id: \.seconds) { choice in
+                                        Text(choice.label).tag(choice.seconds)
+                                    }
+                                }
+                                .labelsHidden()
+                                .controlSize(.small)
+                        }
+                        caption(L("After releasing, the keyboard goes back to saving power. The next "
+                                  + "keystroke arrives a little late; everything after it is instant."))
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                if let detail = model.latencyDetail { caption(detail) }
                 if let text = model.latencyWarning {
                     warning(text, level: model.settings.latencyLevel == 2 ? .red : .orange)
                 }
-
-                Divider()
-
-                row(L("Release when idle for")) {
-                    Picker("", selection: Binding(
-                        get: { model.settings.idleReleaseSeconds },
-                        set: { value in model.edit { $0.idleReleaseSeconds = value } })) {
-                            ForEach(Settings.idleChoices, id: \.seconds) { choice in
-                                Text(choice.label).tag(choice.seconds)
-                            }
-                        }
-                        .labelsHidden()
-                }
-                caption(L("After releasing, the keyboard goes back to saving power. The next "
-                          + "keystroke arrives a little late; everything after it is instant."))
             }
         }
     }
 
     private var options: some View {
         section(nil) {
-            VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: 28) {
                 Toggle("Show in the menu bar", isOn: Binding(
                     get: { model.settings.showMenuBarIcon },
                     set: { value in model.edit { $0.showMenuBarIcon = value } }))
-                VStack(alignment: .leading, spacing: 1) {
+                VStack(alignment: .leading, spacing: 2) {
                     Toggle("Start at login", isOn: Binding(
                         get: { model.launchAtLogin },
                         set: { model.setLaunchAtLogin($0) }))
                     caption(L("Without this, KeyAwake stops working when you restart the Mac."))
                 }
+                Spacer(minLength: 0)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -243,15 +255,13 @@ struct SettingsView: View {
         }
     }
 
-    /// Fixed-width label on the left, so every control lines up.
-    private func row<C: View>(_ label: String, @ViewBuilder control: () -> C) -> some View {
-        HStack(spacing: 12) {
-            Text(label)
-                .frame(width: labelWidth, alignment: .leading)
-                .layoutPriority(1)
-            control()
-                .frame(maxWidth: .infinity, alignment: .trailing)
-        }
+    /// `GeometryReader` in the background reports the laid-out height of a part whatever the
+    /// window's current size; a preference carries it up to `body`.
+    private func measured<V: View>(_ part: MeasuredPart, @ViewBuilder _ view: () -> V) -> some View {
+        view().background(GeometryReader { proxy in
+            Color.clear.preference(key: FittingHeightKey.self,
+                                   value: FittingParts(height: proxy.size.height, part: part))
+        })
     }
 
     private func caption(_ text: String) -> some View {
@@ -269,5 +279,35 @@ struct SettingsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(9)
         .background(RoundedRectangle(cornerRadius: 7).fill(level.opacity(0.12)))
+    }
+}
+
+private enum MeasuredPart { case header, content, footer }
+
+private struct FittingParts: Equatable {
+    var header: CGFloat = 0
+    var content: CGFloat = 0
+    var footer: CGFloat = 0
+
+    init(height: CGFloat = 0, part: MeasuredPart? = nil) {
+        guard let part else { return }
+        switch part {
+        case .header:  header = height
+        case .content: content = height
+        case .footer:  footer = height
+        }
+    }
+
+    /// The two 1 pt dividers that sit between the parts.
+    var total: CGFloat { header + content + footer + 2 }
+}
+
+private struct FittingHeightKey: PreferenceKey {
+    static var defaultValue = FittingParts()
+    static func reduce(value: inout FittingParts, nextValue: () -> FittingParts) {
+        let next = nextValue()
+        value.header = max(value.header, next.header)
+        value.content = max(value.content, next.content)
+        value.footer = max(value.footer, next.footer)
     }
 }

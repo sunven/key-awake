@@ -45,10 +45,10 @@
 "When off, KeyAwake leaves every link alone." = "When off, KeyAwake leaves every link alone.";
 "Bluetooth LE devices" = "Bluetooth LE devices";
 "Only keyboards are boosted. On macOS 27, requesting low latency for a pointing device as well makes the system push the keyboard back to its idle latency." = "Only keyboards are boosted. On macOS 27, requesting low latency for a pointing device as well makes the system push the keyboard back to its idle latency.";
-"No connected device in sight." = "No connected device in sight.";
+"No keyboard in sight." = "No keyboard in sight.";
 "Performance" = "Performance";
 "Link latency" = "Link latency";
-"Release when idle for" = "Release when idle for";
+"Release when idle" = "Release when idle";
 "%@ · worst case ~%d ms" = "%1$@ · worst case ~%2$d ms";
 "Worst case ~%d ms instead of 30. Noticeable while typing, but easier on the battery." = "Worst case ~%d ms instead of 30. Noticeable while typing, but easier on the battery.";
 "Worst case ~%d ms instead of 30. That is slower than the bug KeyAwake fixes (345 ms), so your keyboard will be worse off than without the app." = "Worst case ~%d ms instead of 30. That is slower than the bug KeyAwake fixes (345 ms), so your keyboard will be worse off than without the app.";

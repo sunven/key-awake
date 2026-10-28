@@ -109,8 +109,8 @@ The keyboard is back at a 345 ms worst case in about 0.4 seconds. Repeating the 
 the override, so a shorter refresh interval does not help. Releasing the pointing device makes the
 keyboard stay at latency 0 indefinitely.
 
-KeyAwake therefore handles keyboards only. Pointing devices remain visible in the device list but
-their toggle is disabled, so the reason is not a mystery. `CBConnectOptionLatencyCritical` was
+KeyAwake therefore handles keyboards only. Pointing devices are left entirely to macOS and do not
+appear in the device list. `CBConnectOptionLatencyCritical` was
 tried as a way to keep both; bluetoothd still applied the HID profile, so it is not used.
 
 ## Latency levels

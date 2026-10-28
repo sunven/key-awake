@@ -59,7 +59,7 @@ the way when you are not typing.
 well — with a mouse and keyboard from the same set, for example — makes macOS 27.0.1's HID layer
 re-apply the keyboard's idle profile (latency 44) on the next parameter update. The keyboard then
 feels exactly as bad as before, while the app still reports it as boosted. Pointing devices are
-listed so you can see them, but they are left to macOS.
+left to macOS and stay out of the device list.
 
 <p align="center">
   <img src="docs/screenshot.png" width="620" alt="KeyAwake window">

@@ -45,10 +45,10 @@
 "When off, KeyAwake leaves every link alone." = "Apagado, KeyAwake no toca ningún enlace.";
 "Bluetooth LE devices" = "Dispositivos Bluetooth LE";
 "Only keyboards are boosted. On macOS 27, requesting low latency for a pointing device as well makes the system push the keyboard back to its idle latency." = "Solo se aceleran los teclados. En macOS 27, pedir también baja latencia para un dispositivo señalador hace que el sistema devuelva el teclado a su latencia de reposo.";
-"No connected device in sight." = "No se ve ningún dispositivo conectado.";
+"No keyboard in sight." = "No se ve ningún teclado conectado.";
 "Performance" = "Rendimiento";
 "Link latency" = "Latencia del enlace";
-"Release when idle for" = "Soltar tras inactividad";
+"Release when idle" = "Soltar tras inactividad";
 "%@ · worst case ~%d ms" = "%1$@ · peor caso ~%2$d ms";
 "Worst case ~%d ms instead of 30. Noticeable while typing, but easier on the battery." = "Peor caso ~%d ms en vez de 30. Se nota al teclear, pero ahorra batería.";
 "Worst case ~%d ms instead of 30. That is slower than the bug KeyAwake fixes (345 ms), so your keyboard will be worse off than without the app." = "Peor caso ~%d ms en vez de 30. Es más lento que el fallo que KeyAwake corrige (345 ms), así que el teclado irá peor que sin la app.";

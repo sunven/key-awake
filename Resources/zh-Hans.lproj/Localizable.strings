@@ -45,10 +45,10 @@
 "When off, KeyAwake leaves every link alone." = "关闭后，KeyAwake 不会改动任何链路。";
 "Bluetooth LE devices" = "蓝牙 LE 设备";
 "Only keyboards are boosted. On macOS 27, requesting low latency for a pointing device as well makes the system push the keyboard back to its idle latency." = "仅加速键盘。在 macOS 27 上，如果同时为指针设备请求低延迟，系统会把键盘推回其空闲延迟。";
-"No connected device in sight." = "没有发现已连接的设备。";
+"No keyboard in sight." = "没有发现已连接的键盘。";
 "Performance" = "性能";
 "Link latency" = "链路延迟";
-"Release when idle for" = "空闲多久后释放";
+"Release when idle" = "空闲多久后释放";
 "%@ · worst case ~%d ms" = "%1$@ · 最坏情况约 %2$d 毫秒";
 "Worst case ~%d ms instead of 30. Noticeable while typing, but easier on the battery." = "最坏情况约 %d 毫秒，而非 30 毫秒。打字时能感觉到，但更省电。";
 "Worst case ~%d ms instead of 30. That is slower than the bug KeyAwake fixes (345 ms), so your keyboard will be worse off than without the app." = "最坏情况约 %d 毫秒，而非 30 毫秒。这比 KeyAwake 修复的故障（345 毫秒）还慢，键盘会比不用这个应用时更糟。";
