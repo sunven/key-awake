@@ -120,6 +120,13 @@ process call stays in `ProcessRunner`. The inventory's refresh cadence is `Refre
 `Sources/Policy`, tested by driving time through its interface. `swift test` covers both with
 text fixtures, so a macOS output change fails a test instead of silently classifying nothing.
 
+### Link history
+
+`LinkHistory` in `Sources/Formats` owns the CSV: header, row format, appending and the trim
+that keeps the file bounded. `LinkMonitor` produces a `LinkSample` after each minute and hands
+it over. The history is the product's diagnostic record, so its format is a contract; tests
+write to a temporary file instead of the real one.
+
 ## State machine
 
 ```

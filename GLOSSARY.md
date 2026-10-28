@@ -81,6 +81,10 @@ The verdict — good, fair, poor, unknown — derived from signal, packet loss, 
 **History**:
 The per-minute record of link health that lets an intermittent fault leave a trace.
 
+**Link sample**:
+One per-minute reading of link health — signal, packet loss, radio drops, boost state and the device — written to History.
+_Avoid_: history row, record
+
 ### Settings
 
 **Settings**:

@@ -19,6 +19,7 @@ final class LinkMonitor {
     private(set) var current = Quality()
     private var sampling = false
     private let queue = DispatchQueue(label: "keyawake.linkmonitor")
+    private let history = LinkHistory()
     private var radioChanges: [Date] = []
 
     /// Call whenever the Bluetooth radio changes state; the count feeds the diagnosis.
@@ -45,7 +46,13 @@ final class LinkMonitor {
             } else {
                 self.current.lossPercent = nil
             }
-            self.append(boosted: boosted, bluetooth: bluetooth, device: deviceName)
+            self.history.append(LinkSample(at: Date(),
+                                           rssi: self.current.rssi,
+                                           lossPercent: self.current.lossPercent,
+                                           boosted: boosted,
+                                           bluetooth: bluetooth,
+                                           radioCyclesLastHour: self.current.radioCyclesLastHour,
+                                           deviceName: deviceName))
         }
     }
 
@@ -56,34 +63,5 @@ final class LinkMonitor {
                                                "--predicate", #"process == "bluetoothd" AND category == "Server.Core""#]),
               let text = String(data: data, encoding: .utf8) else { return nil }
         return BluetoothdLog.counters(from: text).lossPercent()
-    }
-
-    private func append(boosted: Bool, bluetooth: String, device: String) {
-        let formatter = ISO8601DateFormatter()
-        let rssi = current.rssi.map(String.init) ?? ""
-        let loss = current.lossPercent.map { String(format: "%.1f", $0) } ?? ""
-        let row = "\(formatter.string(from: Date())),\(rssi),\(loss),\(boosted),\(bluetooth),\(current.radioCyclesLastHour),\(device)\n"
-
-        let url = Paths.history
-        if !FileManager.default.fileExists(atPath: url.path) {
-            let header = "timestamp,rssi_dbm,loss_pct,boosted,bluetooth,radio_cycles_1h,device\n"
-            try? (header + row).write(to: url, atomically: true, encoding: .utf8)
-            return
-        }
-        guard let handle = try? FileHandle(forWritingTo: url) else { return }
-        defer { try? handle.close() }
-        let size = (try? handle.seekToEnd()) ?? 0
-        handle.write(Data(row.utf8))
-        if size > 2_000_000 { trim(url) }   // keep roughly the last two weeks
-    }
-
-    /// Drops the oldest half so the file cannot grow without bound.
-    private func trim(_ url: URL) {
-        guard let text = try? String(contentsOf: url, encoding: .utf8) else { return }
-        var lines = text.split(separator: "\n", omittingEmptySubsequences: false)
-        guard lines.count > 4 else { return }
-        let header = lines.removeFirst()
-        lines.removeFirst(lines.count / 2)
-        try? (header + "\n" + lines.joined(separator: "\n")).write(to: url, atomically: true, encoding: .utf8)
     }
 }
