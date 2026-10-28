@@ -1,0 +1,86 @@
+/* 延迟级别 */
+"Fastest" = "最快";
+"Balanced" = "均衡";
+"Lowest power" = "最低功耗";
+"10–30 ms interval, no skipping" = "10–30 毫秒间隔，不跳过";
+"100–120 ms interval, 1 skip" = "100–120 毫秒间隔，跳过 1 次";
+"290–320 ms interval, 1 skip" = "290–320 毫秒间隔，跳过 1 次";
+
+/* 空闲释放 */
+"30 seconds" = "30 秒";
+"1 minute" = "1 分钟";
+"3 minutes" = "3 分钟";
+"10 minutes" = "10 分钟";
+"Never release" = "永不释放";
+
+/* 设备类型和设备状态 */
+"keyboard" = "键盘";
+"mouse" = "鼠标";
+"away" = "未连接";
+"off" = "已关闭";
+"idle" = "空闲";
+"latency 0" = "延迟 0";
+"not supported" = "不支持";
+
+/* 蓝牙问题 */
+"Bluetooth is turned off." = "蓝牙已关闭。";
+"Bluetooth permission missing: Settings › Privacy & Security › Bluetooth." = "缺少蓝牙权限：系统设置 › 隐私与安全性 › 蓝牙。";
+"This Mac does not support Bluetooth LE." = "这台 Mac 不支持蓝牙 LE。";
+"Bluetooth state unknown." = "蓝牙状态未知。";
+
+/* 引擎问题 */
+"The engine is not responding. Try turning “Start at login” off and on again." = "引擎无响应。请尝试关闭再重新开启“登录时启动”。";
+"The engine is not running. Reopen KeyAwake to start it." = "引擎未运行。重新打开 KeyAwake 即可启动。";
+"This version of macOS no longer exposes the latency setting. KeyAwake cannot help." = "此版本的 macOS 不再提供延迟设置。KeyAwake 无法生效。";
+
+/* 标题状态 */
+"Disabled" = "已停用";
+"Stopped" = "已停止";
+"Boosting" = "加速中";
+"Idle" = "空闲";
+
+/* 窗口 */
+"Keeps Bluetooth LE keyboards on a low-latency link." = "让蓝牙 LE 键盘保持在低延迟链路上。";
+"Enabled" = "已启用";
+"When off, KeyAwake leaves every link alone." = "关闭后，KeyAwake 不会改动任何链路。";
+"Bluetooth LE devices" = "蓝牙 LE 设备";
+"Only keyboards are boosted. On macOS 27, requesting low latency for a pointing device as well makes the system push the keyboard back to its idle latency." = "仅加速键盘。在 macOS 27 上，如果同时为指针设备请求低延迟，系统会把键盘推回其空闲延迟。";
+"No connected device in sight." = "没有发现已连接的设备。";
+"Performance" = "性能";
+"Link latency" = "链路延迟";
+"Release when idle for" = "空闲多久后释放";
+"%@ · worst case ~%d ms" = "%1$@ · 最坏情况约 %2$d 毫秒";
+"Worst case ~%d ms instead of 30. Noticeable while typing, but easier on the battery." = "最坏情况约 %d 毫秒，而非 30 毫秒。打字时能感觉到，但更省电。";
+"Worst case ~%d ms instead of 30. That is slower than the bug KeyAwake fixes (345 ms), so your keyboard will be worse off than without the app." = "最坏情况约 %d 毫秒，而非 30 毫秒。这比 KeyAwake 修复的故障（345 毫秒）还慢，键盘会比不用这个应用时更糟。";
+"After releasing, the keyboard goes back to saving power. The next keystroke arrives a little late; everything after it is instant." = "释放后，键盘会恢复省电。下一次按键会稍晚到达；之后的一切都是即时的。";
+"Show in the menu bar" = "在菜单栏中显示";
+"Start at login" = "登录时启动";
+"Without this, KeyAwake stops working when you restart the Mac." = "不开启此项，重启 Mac 后 KeyAwake 将停止工作。";
+"Closing this window does not stop the boost." = "关闭此窗口不会停止加速。";
+"Show log…" = "显示日志…";
+
+/* 菜单栏 */
+"KeyAwake — disabled" = "KeyAwake — 已停用";
+"KeyAwake — boosting" = "KeyAwake — 加速中";
+"KeyAwake — idle" = "KeyAwake — 空闲";
+"Open KeyAwake…" = "打开 KeyAwake…";
+"Hide this icon" = "隐藏此图标";
+
+/* 链路健康 */
+"Link health" = "链路健康";
+"Signal" = "信号";
+"Packet loss" = "数据包丢失";
+"Radio drops (1 h)" = "无线电断开（1 小时）";
+"History…" = "历史记录…";
+"Good" = "良好";
+"Fair" = "一般";
+"Poor" = "较差";
+"not measured while idle" = "空闲时不测量";
+"Recorded every minute, so a fault that comes and goes leaves a trail." = "每分钟记录一次，间歇性故障也会留下痕迹。";
+"The Bluetooth radio went down %d times in the last hour. Check whether the Mac keeps sleeping." = "过去一小时内蓝牙无线电断开了 %d 次。请检查 Mac 是否频繁休眠。";
+"%@ %% of the keyboard's packets are not reaching the Mac. Something nearby is transmitting on 2.4 GHz." = "键盘有 %@ %% 的数据包没有到达 Mac。附近有设备在 2.4 GHz 频段上发送信号。";
+"Signal at %d dBm. The keyboard is too far away, or something is in the way." = "信号为 %d dBm。键盘距离太远，或中间有遮挡。";
+"%@ %% packet loss. Usable, but there is interference around." = "%@ %% 的数据包丢失。可以使用，但周围有干扰。";
+"Signal at %d dBm, weaker than it should be." = "信号为 %d dBm，比应有的弱。";
+"too little traffic to measure" = "流量太少，无法测量";
+"Device %@" = "设备 %@";

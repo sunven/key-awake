@@ -1,0 +1,86 @@
+/* Niveles de latencia */
+"Fastest" = "Máxima respuesta";
+"Balanced" = "Equilibrada";
+"Lowest power" = "Mínimo consumo";
+"10–30 ms interval, no skipping" = "intervalo 10–30 ms, sin saltos";
+"100–120 ms interval, 1 skip" = "intervalo 100–120 ms, 1 salto";
+"290–320 ms interval, 1 skip" = "intervalo 290–320 ms, 1 salto";
+
+/* Soltar por inactividad */
+"30 seconds" = "30 segundos";
+"1 minute" = "1 minuto";
+"3 minutes" = "3 minutos";
+"10 minutes" = "10 minutos";
+"Never release" = "Nunca soltar";
+
+/* Tipos de dispositivo y estado */
+"keyboard" = "teclado";
+"mouse" = "ratón";
+"away" = "ausente";
+"off" = "desactivado";
+"idle" = "en reposo";
+"latency 0" = "latency 0";
+"not supported" = "no compatible";
+
+/* Problemas de Bluetooth */
+"Bluetooth is turned off." = "El Bluetooth está apagado.";
+"Bluetooth permission missing: Settings › Privacy & Security › Bluetooth." = "Falta el permiso de Bluetooth: Ajustes › Privacidad y seguridad › Bluetooth.";
+"This Mac does not support Bluetooth LE." = "Este Mac no admite Bluetooth LE.";
+"Bluetooth state unknown." = "Estado del Bluetooth desconocido.";
+
+/* Problemas del motor */
+"The engine is not responding. Try turning “Start at login” off and on again." = "El motor no responde. Prueba a desactivar y volver a activar «Arrancar al iniciar sesión».";
+"The engine is not running. Reopen KeyAwake to start it." = "El motor no está en marcha. Vuelve a abrir KeyAwake para arrancarlo.";
+"This version of macOS no longer exposes the latency setting. KeyAwake cannot help." = "Esta versión de macOS ya no expone el ajuste de latencia. KeyAwake no puede hacer nada.";
+
+/* Estado en la cabecera */
+"Disabled" = "Desactivado";
+"Stopped" = "Detenido";
+"Boosting" = "Turbo";
+"Idle" = "En reposo";
+
+/* Ventana */
+"Keeps Bluetooth LE keyboards on a low-latency link." = "Mantiene los teclados Bluetooth LE en un enlace de baja latencia.";
+"Enabled" = "Activado";
+"When off, KeyAwake leaves every link alone." = "Apagado, KeyAwake no toca ningún enlace.";
+"Bluetooth LE devices" = "Dispositivos Bluetooth LE";
+"Only keyboards are boosted. On macOS 27, requesting low latency for a pointing device as well makes the system push the keyboard back to its idle latency." = "Solo se aceleran los teclados. En macOS 27, pedir también baja latencia para un dispositivo señalador hace que el sistema devuelva el teclado a su latencia de reposo.";
+"No connected device in sight." = "No se ve ningún dispositivo conectado.";
+"Performance" = "Rendimiento";
+"Link latency" = "Latencia del enlace";
+"Release when idle for" = "Soltar tras inactividad";
+"%@ · worst case ~%d ms" = "%1$@ · peor caso ~%2$d ms";
+"Worst case ~%d ms instead of 30. Noticeable while typing, but easier on the battery." = "Peor caso ~%d ms en vez de 30. Se nota al teclear, pero ahorra batería.";
+"Worst case ~%d ms instead of 30. That is slower than the bug KeyAwake fixes (345 ms), so your keyboard will be worse off than without the app." = "Peor caso ~%d ms en vez de 30. Es más lento que el fallo que KeyAwake corrige (345 ms), así que el teclado irá peor que sin la app.";
+"After releasing, the keyboard goes back to saving power. The next keystroke arrives a little late; everything after it is instant." = "Al soltar, el teclado vuelve a ahorrar batería. La siguiente pulsación llega algo tarde; a partir de ahí, todo instantáneo.";
+"Show in the menu bar" = "Mostrar en la barra de menús";
+"Start at login" = "Arrancar al iniciar sesión";
+"Without this, KeyAwake stops working when you restart the Mac." = "Sin esto, KeyAwake deja de funcionar al reiniciar el Mac.";
+"Closing this window does not stop the boost." = "Cerrar esta ventana no detiene la aceleración.";
+"Show log…" = "Mostrar el registro…";
+
+/* Barra de menús */
+"KeyAwake — disabled" = "KeyAwake — desactivado";
+"KeyAwake — boosting" = "KeyAwake — turbo";
+"KeyAwake — idle" = "KeyAwake — en reposo";
+"Open KeyAwake…" = "Abrir KeyAwake…";
+"Hide this icon" = "Ocultar este icono";
+
+/* Salud del enlace */
+"Link health" = "Salud del enlace";
+"Signal" = "Señal";
+"Packet loss" = "Pérdida de paquetes";
+"Radio drops (1 h)" = "Cortes de radio (1 h)";
+"History…" = "Historial…";
+"Good" = "Buena";
+"Fair" = "Regular";
+"Poor" = "Mala";
+"not measured while idle" = "no se mide en reposo";
+"Recorded every minute, so a fault that comes and goes leaves a trail." = "Se registra cada minuto, para que un fallo intermitente deje rastro.";
+"The Bluetooth radio went down %d times in the last hour. Check whether the Mac keeps sleeping." = "La radio Bluetooth se ha caído %d veces en la última hora. Comprueba si el Mac se está durmiendo.";
+"%@ %% of the keyboard's packets are not reaching the Mac. Something nearby is transmitting on 2.4 GHz." = "El %@ %% de los paquetes del teclado no llega al Mac. Algo cerca está emitiendo en 2,4 GHz.";
+"Signal at %d dBm. The keyboard is too far away, or something is in the way." = "Señal a %d dBm. El teclado está demasiado lejos o hay algo en medio.";
+"%@ %% packet loss. Usable, but there is interference around." = "%@ %% de pérdida. Usable, pero hay interferencia alrededor.";
+"Signal at %d dBm, weaker than it should be." = "Señal a %d dBm, más débil de lo que debería.";
+"too little traffic to measure" = "poco tráfico para medirlo";
+"Device %@" = "Dispositivo %@";

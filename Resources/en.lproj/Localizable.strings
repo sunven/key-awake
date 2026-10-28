@@ -1,0 +1,86 @@
+/* Latency levels */
+"Fastest" = "Fastest";
+"Balanced" = "Balanced";
+"Lowest power" = "Lowest power";
+"10–30 ms interval, no skipping" = "10–30 ms interval, no skipping";
+"100–120 ms interval, 1 skip" = "100–120 ms interval, 1 skip";
+"290–320 ms interval, 1 skip" = "290–320 ms interval, 1 skip";
+
+/* Idle release */
+"30 seconds" = "30 seconds";
+"1 minute" = "1 minute";
+"3 minutes" = "3 minutes";
+"10 minutes" = "10 minutes";
+"Never release" = "Never release";
+
+/* Device kinds and per-device state */
+"keyboard" = "keyboard";
+"mouse" = "mouse";
+"away" = "away";
+"off" = "off";
+"idle" = "idle";
+"latency 0" = "latency 0";
+"not supported" = "not supported";
+
+/* Bluetooth problems */
+"Bluetooth is turned off." = "Bluetooth is turned off.";
+"Bluetooth permission missing: Settings › Privacy & Security › Bluetooth." = "Bluetooth permission missing: Settings › Privacy & Security › Bluetooth.";
+"This Mac does not support Bluetooth LE." = "This Mac does not support Bluetooth LE.";
+"Bluetooth state unknown." = "Bluetooth state unknown.";
+
+/* Engine problems */
+"The engine is not responding. Try turning “Start at login” off and on again." = "The engine is not responding. Try turning “Start at login” off and on again.";
+"The engine is not running. Reopen KeyAwake to start it." = "The engine is not running. Reopen KeyAwake to start it.";
+"This version of macOS no longer exposes the latency setting. KeyAwake cannot help." = "This version of macOS no longer exposes the latency setting. KeyAwake cannot help.";
+
+/* Headline state */
+"Disabled" = "Disabled";
+"Stopped" = "Stopped";
+"Boosting" = "Boosting";
+"Idle" = "Idle";
+
+/* Window */
+"Keeps Bluetooth LE keyboards on a low-latency link." = "Keeps Bluetooth LE keyboards on a low-latency link.";
+"Enabled" = "Enabled";
+"When off, KeyAwake leaves every link alone." = "When off, KeyAwake leaves every link alone.";
+"Bluetooth LE devices" = "Bluetooth LE devices";
+"Only keyboards are boosted. On macOS 27, requesting low latency for a pointing device as well makes the system push the keyboard back to its idle latency." = "Only keyboards are boosted. On macOS 27, requesting low latency for a pointing device as well makes the system push the keyboard back to its idle latency.";
+"No connected device in sight." = "No connected device in sight.";
+"Performance" = "Performance";
+"Link latency" = "Link latency";
+"Release when idle for" = "Release when idle for";
+"%@ · worst case ~%d ms" = "%1$@ · worst case ~%2$d ms";
+"Worst case ~%d ms instead of 30. Noticeable while typing, but easier on the battery." = "Worst case ~%d ms instead of 30. Noticeable while typing, but easier on the battery.";
+"Worst case ~%d ms instead of 30. That is slower than the bug KeyAwake fixes (345 ms), so your keyboard will be worse off than without the app." = "Worst case ~%d ms instead of 30. That is slower than the bug KeyAwake fixes (345 ms), so your keyboard will be worse off than without the app.";
+"After releasing, the keyboard goes back to saving power. The next keystroke arrives a little late; everything after it is instant." = "After releasing, the keyboard goes back to saving power. The next keystroke arrives a little late; everything after it is instant.";
+"Show in the menu bar" = "Show in the menu bar";
+"Start at login" = "Start at login";
+"Without this, KeyAwake stops working when you restart the Mac." = "Without this, KeyAwake stops working when you restart the Mac.";
+"Closing this window does not stop the boost." = "Closing this window does not stop the boost.";
+"Show log…" = "Show log…";
+
+/* Menu bar */
+"KeyAwake — disabled" = "KeyAwake — disabled";
+"KeyAwake — boosting" = "KeyAwake — boosting";
+"KeyAwake — idle" = "KeyAwake — idle";
+"Open KeyAwake…" = "Open KeyAwake…";
+"Hide this icon" = "Hide this icon";
+
+/* Link health */
+"Link health" = "Link health";
+"Signal" = "Signal";
+"Packet loss" = "Packet loss";
+"Radio drops (1 h)" = "Radio drops (1 h)";
+"History…" = "History…";
+"Good" = "Good";
+"Fair" = "Fair";
+"Poor" = "Poor";
+"not measured while idle" = "not measured while idle";
+"Recorded every minute, so a fault that comes and goes leaves a trail." = "Recorded every minute, so a fault that comes and goes leaves a trail.";
+"The Bluetooth radio went down %d times in the last hour. Check whether the Mac keeps sleeping." = "The Bluetooth radio went down %d times in the last hour. Check whether the Mac keeps sleeping.";
+"%@ %% of the keyboard's packets are not reaching the Mac. Something nearby is transmitting on 2.4 GHz." = "%@ %% of the keyboard's packets are not reaching the Mac. Something nearby is transmitting on 2.4 GHz.";
+"Signal at %d dBm. The keyboard is too far away, or something is in the way." = "Signal at %d dBm. The keyboard is too far away, or something is in the way.";
+"%@ %% packet loss. Usable, but there is interference around." = "%@ %% packet loss. Usable, but there is interference around.";
+"Signal at %d dBm, weaker than it should be." = "Signal at %d dBm, weaker than it should be.";
+"too little traffic to measure" = "too little traffic to measure";
+"Device %@" = "Device %@";
