@@ -21,138 +21,75 @@
 
 ---
 
-## The problem
-
-If your Bluetooth keyboard became painfully laggy after updating to macOS 27, this is probably why.
-
-macOS 27 rebuilt LE keyboard power management around **LE Connection Subrating**, a Bluetooth 5.3
-feature. It assigns the keyboard a profile carrying `peripheralLatency: 22` — meaning the keyboard
-is allowed to stay silent for up to **345 ms** — and then immediately tries to neutralise that with
-subrating, which would keep the keyboard listening right after any activity.
-
-That plan is sound. It just falls apart on hardware older than Bluetooth 5.3:
-
-```
-setConnectionLatency LEHID-15ms to device "…"
-update: minInterval:15.000 maxInterval:15.000 peripheralLatency:22 …
-
-Proceeding with sending connection subrating parameters:
-  subrateMin:1 subrateMax:6 maxLatency:1 continuationNumber=1
-Remote Features: FF 79 2D 04 9E 03 00 00 … SupportsSubrating: 0
-Remote device does not support connection subrating. (status=65535)
-Failed to enter Connection Subrating Mode … Status=1330
-```
-
-The subrating request fails — **and nothing rolls back the 345 ms.** Your keyboard is left stranded.
-
-Your keyboard even asks macOS for better parameters (7.5–12.5 ms) and gets turned down:
-
-```
-Rejecting following parameters: min=6, max=10, lat=5, mul=50, cel=4, preferredLowLatencyInterval=0
-```
-
-There is no setting anywhere in macOS that fixes this.
-
-## The fix
-
-A CoreBluetooth client that holds the connection and asks for low latency forces
-`peripheral latency: 0`. KeyAwake is that client. It runs quietly in the background and gets out of
-the way when you are not typing.
-
-**KeyAwake handles keyboards only.** Asking bluetoothd for low latency on a pointing device as
-well — with a mouse and keyboard from the same set, for example — makes macOS 27.0.1's HID layer
-re-apply the keyboard's idle profile (latency 44) on the next parameter update. The keyboard then
-feels exactly as bad as before, while the app still reports it as boosted. Pointing devices are
-left to macOS and stay out of the device list.
-
 <p align="center">
   <img src="docs/screenshot.png" width="620" alt="KeyAwake window">
 </p>
 
-<p align="center">
-  <sub>English, Spanish and Simplified Chinese, following your system language —
-  <a href="docs/screenshot-es.png">Spanish</a>.</sub>
-</p>
+## What it does
+
+macOS 27 manages LE keyboards around **LE Connection Subrating**. It assigns a profile with
+`peripheralLatency: 22` — up to **345 ms** between key presses — and relies on subrating to cancel
+that out. On hardware older than Bluetooth 5.3 the request fails, nothing rolls the latency back,
+and the keyboard feels sluggish. No macOS setting fixes it.
+
+KeyAwake is a small CoreBluetooth client that holds the connection at latency 0. It releases the
+link after a period without typing (3 minutes by default) to save battery, and takes it back on
+your next keystroke — that first key after idle arrives a little late.
+
+**Keyboards only.** Requesting low latency for a pointing device as well makes the keyboard fall
+back to its idle profile on macOS 27.0.1, so pointing devices are left to macOS.
 
 ## Install
 
-**Download the latest release**, open the `.dmg`, and drag `KeyAwake.app` to Applications.
-The background engine ships inside the app — there is nothing else to install. A `.zip` is
-available too if you prefer.
+Download the latest release, open the `.dmg`, and drag `KeyAwake.app` into Applications. Then tick
+your keyboard and enable **Start at login**.
 
-Because the app is not notarised, macOS will refuse the first launch. Right-click the app and pick
-**Open**, then confirm. You only do this once. If macOS still blocks it:
+The app is not notarised, so the first launch needs **right-click → Open**. If macOS still blocks it:
 
 ```sh
 xattr -dr com.apple.quarantine /Applications/KeyAwake.app
 ```
 
-Then open KeyAwake, tick your keyboard, and turn on **Arrancar al iniciar sesión**
-(start at login). That is it.
-
-**Or build it yourself** — recommended, see [Building](#building). A locally built copy is signed
-with your own certificate, which means macOS stops re-asking for Bluetooth permission.
+Or build it yourself (see [Building](#building)) — a copy signed with your own certificate stops
+macOS re-asking for Bluetooth permission.
 
 ## Permissions
 
-**Bluetooth, once, for the engine only.** That is the entire list.
-
-KeyAwake does **not** request Accessibility or Input Monitoring. Idle detection uses
-`CGEventSourceSecondsSinceLastEventType`, a system-wide idle counter — not an event tap. It cannot
-see what you type, and there is no network code anywhere in the project.
+Bluetooth only, requested once by the background engine. No Accessibility or Input Monitoring: idle
+detection uses `CGEventSourceSecondsSinceLastEventType`, a system-wide idle counter, not an event
+tap. There is no network code.
 
 ## Latency levels
 
-Measured on macOS 27.2, not estimated — these are the parameters `bluetoothd` actually negotiates:
+Measured on macOS 27.2 — the parameters `bluetoothd` actually negotiates:
 
 | Setting | Interval | Peripheral latency | Worst case |
 |---|---|---|---|
-| **Máxima respuesta** (default) | 10–30 ms | 0 | **~30 ms** |
-| Equilibrada | 100–120 ms | 1 | ~240 ms |
-| Mínimo consumo | 290–320 ms | 1 | ~640 ms |
+| **Fastest** (default) | 10–30 ms | 0 | **~30 ms** |
+| Balanced | 100–120 ms | 1 | ~240 ms |
+| Lowest power | 290–320 ms | 1 | ~640 ms |
 
-> Note that **Mínimo consumo is worse than the bug itself** (345 ms). It exists only if you care
-> far more about battery than about typing. The app warns you when you pick it.
+> **Lowest power is slower than the bug itself** (345 ms). The app warns you when you pick it.
 
-## Battery
+## Troubleshooting
 
-Holding the link at latency 0 means the keyboard listens every 30 ms, which costs battery. So
-KeyAwake releases the link after a period with no typing (3 minutes by default) and grabs it back on
-your next keystroke.
+The app records signal strength, packet loss and radio drops every minute to
+`~/Library/Application Support/KeyAwake/link-history.csv`, and shows the current reading in the window.
 
-The trade: the **first keystroke after an idle period arrives late**, then everything is instant.
-Set *Soltar tras inactividad* to **Nunca soltar** if you would rather never see that.
-
-## When it still feels slow
-
-KeyAwake records the link's health every minute — signal strength, packet loss, and how often
-the Bluetooth radio went down — to `~/Library/Application Support/KeyAwake/link-history.csv`.
-The window shows the current reading and says what is wrong in one line.
-
-This exists because the hard faults are intermittent. Diagnosing one from a snapshot taken an
-hour later means blaming whatever happens to have changed since, which is how you end up
-accusing an innocent USB dock. Three separate causes turned up during development, and only the
-history distinguishes them:
-
-| What you see | What it means |
+| Symptom | Likely cause |
 |---|---|
-| Many **radio drops** in an hour | The Mac keeps sleeping and cycling Bluetooth. Check `pmset -g custom`; `sleep 1` on battery will do this. |
-| High **packet loss**, decent signal | Something nearby is transmitting on 2.4 GHz. |
-| Weak **signal** (below −70 dBm) | Distance or an obstruction. |
-| All three fine, still slow | Not the link. Compare against your Mac's built-in keyboard. |
+| Many radio drops in an hour | The Mac keeps sleeping and cycling Bluetooth — check `pmset -g custom`. |
+| High packet loss, decent signal | 2.4 GHz interference nearby. |
+| Weak signal (below −70 dBm) | Distance or an obstruction. |
+| All fine, still slow | Not the link — compare with the built-in keyboard. |
 
 ## How it works
 
-Two bundles. `KeyAwake.app` is the interface — open it, change things, close it, and it disappears
-from the Dock. `KeyAwakeAgent.app`, nested inside it as a login item, is the engine that keeps
-running. The optional menu bar icon belongs to the engine, so you can hide it without losing
-anything.
+`KeyAwake.app` is the interface; `KeyAwakeAgent.app`, nested inside it as a login item, is the
+engine that keeps running. Devices are remembered by hardware address rather than CoreBluetooth
+UUID, so re-pairing does not break your settings.
 
-Devices are remembered by **hardware address, not CoreBluetooth UUID**, so re-pairing your keyboard
-or switching Bluetooth slots does not break your configuration.
-
-Full write-up, including the three private selectors involved and why the public discovery API
-returns nothing: **[docs/DESIGN.md](docs/DESIGN.md)**.
+Design notes, private API use and caveats: **[docs/DESIGN.md](docs/DESIGN.md)**.
 
 ## Building
 
@@ -164,9 +101,7 @@ cd key-awake
 ./build.sh
 ```
 
-`build.sh` picks up any code signing identity from `security find-identity -v -p codesigning` and
-falls back to ad-hoc. Signing with a real identity is what stops macOS re-asking for Bluetooth
-permission after every rebuild.
+`build.sh` uses a code signing identity when one is available and falls back to ad-hoc.
 
 ## Uninstall
 
@@ -178,29 +113,24 @@ rm -rf /Applications/KeyAwake.app ~/Library/Application\ Support/KeyAwake
 
 ## Caveats
 
-- **Uses private CoreBluetooth API.** There is no public way to do this. Every call is guarded with
-  `responds(to:)`, so a future macOS that removes them makes KeyAwake stop helping rather than
-  crash — but it will stop helping.
-- **Keyboards only.** Requesting low latency for a pointing device as well hands the keyboard back
-  to macOS's idle profile on 27.0.1; see [The fix](#the-fix).
-- **Built for macOS 27.** The bug it works around does not exist on earlier versions.
+- **Private CoreBluetooth API.** There is no public way to do this; every call is guarded with
+  `responds(to:)`, so a future macOS makes KeyAwake stop working rather than crash.
+- **Built for macOS 27.** The bug does not exist on earlier versions.
 - **Not notarised.** See [Install](#install).
 
 ## Contributing
 
 Translations are the easiest way to help: copy `Resources/en.lproj/Localizable.strings` to a new
 `<language>.lproj`, translate the right-hand side, and add the language code to
-`CFBundleLocalizations` in `build.sh`. The app currently ships English, Spanish and Simplified Chinese.
+`CFBundleLocalizations` in `build.sh`. The app ships English, Spanish and Simplified Chinese.
 
 ## Credits
 
-KeyAwake is a rewrite of [KeyBoost](https://github.com/leonardofundora/KeyBoost) by
-[Leonardo Fundora](https://github.com/leonardofundora). The original established the diagnosis of
-the macOS 27 subrating bug and the CoreBluetooth workaround this app is built on; KeyAwake
-restructures that work into smaller tested modules and extends it with the link history and
-diagnostics described above. The original copyright notice is retained.
+A rewrite of [KeyBoost](https://github.com/leonardofundora/KeyBoost) by
+[Leonardo Fundora](https://github.com/leonardofundora), which established the diagnosis and the
+CoreBluetooth workaround. The original copyright notice is retained.
 
 ## License
 
-MIT — see [LICENSE](LICENSE). The copyright notice belongs to Leonardo Fundora, the author of the
-original KeyBoost.
+MIT — see [LICENSE](LICENSE). Includes code from KeyBoost; its original copyright notice
+(© Leonardo Fundora) is retained.
