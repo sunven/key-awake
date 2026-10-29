@@ -8,7 +8,7 @@
 import AppKit
 import SwiftUI
 
-let contentSize = NSSize(width: 560, height: 852)
+var contentSize = NSSize(width: 580, height: 852)
 let pad: CGFloat = 60
 let padBottom: CGFloat = 76   // el desenfoque de la sombra cae hacia abajo
 let titleBar: CGFloat = 28
@@ -30,10 +30,37 @@ app.setActivationPolicy(.prohibited)
 let model = Model()
 
 DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+    // Demo data, so the picture does not expose the machine's own keyboard and does not
+    // change with its state. One keyboard, one pointing device, a healthy link, boosting.
+    var demo = Settings()
+    demo.enabled = true
+    demo.showMenuBarIcon = false
+    demo.idleReleaseSeconds = 180
+    demo.latencyLevel = 0
+    demo.boosted = [BoostedDevice(name: "My Keyboard", addresses: ["AA:BB:CC:11:22:33"])]
+    model.settings = demo
+    model.launchAtLogin = true
+    model.status = AgentStatus(
+        bluetooth: .on, active: true, apiAvailable: true,
+        devices: [
+            DeviceStatus(address: "AA:BB:CC:11:22:33", name: "My Keyboard",
+                         kind: .keyboard, present: true, wanted: true, boosted: true),
+            DeviceStatus(address: "AA:BB:CC:44:55:66", name: "My Mouse",
+                         kind: .pointing, present: true, wanted: false, boosted: false),
+        ],
+        rssi: -52, lossPercent: 0, radioCyclesLastHour: 0, updated: Date())
+
+    // The window is as tall as its contents, as in the real app; measuring beats a
+    // hard-coded height that goes stale the moment a section is added.
+    let preview = SettingsView(model: model).previewBody
+    let probe = NSHostingView(rootView: preview.frame(width: contentSize.width))
+    probe.frame = NSRect(x: 0, y: 0, width: contentSize.width, height: 100)
+    probe.layoutSubtreeIfNeeded()
+    contentSize.height = max(SettingsView.minContentHeight, ceil(probe.fittingSize.height))
+
     // 1. The window contents.
     let renderer = ImageRenderer(content:
-        SettingsView(model: model).previewBody
-            .frame(width: contentSize.width, height: contentSize.height))
+        preview.frame(width: contentSize.width, height: contentSize.height))
     renderer.scale = scale
     guard let content = renderer.nsImage else { print("render failed"); exit(1) }
 

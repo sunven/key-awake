@@ -171,6 +171,9 @@ struct SettingsView: View {
                             }
                             .labelsHidden()
                             .controlSize(.small)
+                            // Without this the longer Spanish value is truncated to
+                            // "Máxima respu…" at the default window width.
+                            .fixedSize(horizontal: true, vertical: false)
                         }
                         if let detail = model.latencyDetail { caption(detail) }
                     }
@@ -187,6 +190,7 @@ struct SettingsView: View {
                             }
                             .labelsHidden()
                             .controlSize(.small)
+                            .fixedSize(horizontal: true, vertical: false)
                         }
                         caption(L("After releasing, the keyboard goes back to saving power. The next "
                                   + "keystroke arrives a little late; everything after it is instant."))
