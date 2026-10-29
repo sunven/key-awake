@@ -5,6 +5,10 @@
 <h1 align="center">KeyAwake</h1>
 
 <p align="center">
+  <b>English</b> · <a href="README.zh-CN.md">简体中文</a>
+</p>
+
+<p align="center">
   <b>Fixes the Bluetooth LE keyboard lag introduced in macOS 27.</b><br>
   Brings the link from a 345 ms worst case down to ~30 ms.
 </p>
